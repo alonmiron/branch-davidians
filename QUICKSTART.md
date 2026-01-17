@@ -4,9 +4,17 @@
 
 The fastest way to get started:
 
+**macOS/Linux:**
 ```bash
 ./start.sh
 ```
+
+**Windows (PowerShell):**
+```powershell
+.\start.sh
+```
+
+*Note: If `start.sh` doesn't work on Windows, follow the Manual Setup instructions below.*
 
 This will:
 1. Set up the backend virtual environment
@@ -23,10 +31,32 @@ Then open your browser to:
 If you prefer to run services separately:
 
 ### Terminal 1 - Backend
+
+**macOS/Linux:**
 ```bash
 cd backend
 python3 -m venv venv
 source venv/bin/activate
+pip install -r requirements.txt
+python -m app.init_db
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+**Windows (PowerShell):**
+```powershell
+cd backend
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python -m app.init_db
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+**Windows (CMD):**
+```cmd
+cd backend
+python -m venv venv
+venv\Scripts\activate.bat
 pip install -r requirements.txt
 python -m app.init_db
 uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
@@ -77,6 +107,8 @@ You can add test customers with these example values:
 ## Troubleshooting
 
 **Port already in use**:
+
+**macOS/Linux:**
 ```bash
 # Kill process on port 8000
 lsof -ti:8000 | xargs kill -9
@@ -85,7 +117,27 @@ lsof -ti:8000 | xargs kill -9
 lsof -ti:5173 | xargs kill -9
 ```
 
+**Windows (PowerShell):**
+```powershell
+# Kill process on port 8000
+Get-NetTCPConnection -LocalPort 8000 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess | ForEach-Object { Stop-Process -Id $_ -Force }
+
+# Kill process on port 5173
+Get-NetTCPConnection -LocalPort 5173 -ErrorAction SilentlyContinue | Select-Object -ExpandProperty OwningProcess | ForEach-Object { Stop-Process -Id $_ -Force }
+```
+
+**Windows (CMD):**
+```cmd
+# Kill process on port 8000
+for /f "tokens=5" %a in ('netstat -aon ^| find ":8000" ^| find "LISTENING"') do taskkill /F /PID %a
+
+# Kill process on port 5173
+for /f "tokens=5" %a in ('netstat -aon ^| find ":5173" ^| find "LISTENING"') do taskkill /F /PID %a
+```
+
 **Database issues**:
+
+**macOS/Linux:**
 ```bash
 # Reset database
 cd backend
@@ -93,7 +145,17 @@ rm billing.db
 python -m app.init_db
 ```
 
+**Windows (PowerShell/CMD):**
+```powershell
+# Reset database
+cd backend
+Remove-Item billing.db -ErrorAction SilentlyContinue
+python -m app.init_db
+```
+
 **Dependencies not installing**:
+
+**macOS/Linux:**
 ```bash
 # Backend
 cd backend
@@ -106,6 +168,23 @@ pip install -r requirements.txt
 # Frontend
 cd frontend
 rm -rf node_modules package-lock.json
+npm install
+```
+
+**Windows (PowerShell):**
+```powershell
+# Backend
+cd backend
+Remove-Item -Recurse -Force venv -ErrorAction SilentlyContinue
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install --upgrade pip
+pip install -r requirements.txt
+
+# Frontend
+cd frontend
+Remove-Item -Recurse -Force node_modules -ErrorAction SilentlyContinue
+Remove-Item package-lock.json -ErrorAction SilentlyContinue
 npm install
 ```
 

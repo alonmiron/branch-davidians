@@ -8,7 +8,7 @@ export function MainLogo({ className = "h-12 w-auto" }) {
     // Fallback SVG placeholder for main logo
     return (
       <div className="flex items-center justify-center bg-gradient-to-br from-orange-600 to-orange-700 rounded-lg px-4 py-2 shadow-md">
-        <span className="text-white font-bold text-2xl tracking-wider">רעננה</span>
+        <span className="text-white font-bold text-2xl tracking-wider">חגלה</span>
       </div>
     );
   }
