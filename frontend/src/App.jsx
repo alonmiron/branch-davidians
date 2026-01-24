@@ -3,6 +3,9 @@ import { AuthProvider, useAuth } from './context/AuthContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import { MainLogo, SecondaryLogo } from './components/Logo'
 import Login from './pages/Login'
+import ForgotPassword from './pages/ForgotPassword'
+import ResetPassword from './pages/ResetPassword'
+import AccountSettings from './pages/AccountSettings'
 import Dashboard from './pages/Dashboard'
 import Customers from './pages/Customers'
 import FailedCharges from './pages/FailedCharges'
@@ -16,6 +19,8 @@ function AppContent() {
     return (
       <Routes>
         <Route path="/login" element={<Login />} />
+        <Route path="/forgot-password" element={<ForgotPassword />} />
+        <Route path="/reset-password" element={<ResetPassword />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     );
@@ -108,6 +113,16 @@ function AppContent() {
                   <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
                 </div>
               </div>
+              <Link
+                to="/account"
+                className="inline-flex items-center px-3 xl:px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition duration-150"
+              >
+                <svg className="h-4 w-4 xl:mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A4 4 0 017 16h10a4 4 0 011.879.804M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4a8 8 0 100 16 8 8 0 000-16z" />
+                </svg>
+                <span className="hidden xl:inline">Account</span>
+              </Link>
               <button
                 onClick={logout}
                 className="inline-flex items-center px-3 xl:px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 hover:border-gray-400 transition duration-150"
@@ -129,6 +144,7 @@ function AppContent() {
           <Route path="/manual-payments" element={<ProtectedRoute><ManualPayments /></ProtectedRoute>} />
           <Route path="/batch" element={<ProtectedRoute><BatchOperations /></ProtectedRoute>} />
           <Route path="/failed" element={<ProtectedRoute><FailedCharges /></ProtectedRoute>} />
+          <Route path="/account" element={<ProtectedRoute><AccountSettings /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>

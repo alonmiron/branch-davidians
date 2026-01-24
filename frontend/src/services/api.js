@@ -45,6 +45,14 @@ export const getCurrentUser = () => api.get('/auth/me');
 export const getUsers = () => api.get('/auth/users');
 export const updateUser = (id, data) => api.put(`/auth/users/${id}`, data);
 export const deleteUser = (id) => api.delete(`/auth/users/${id}`);
+export const forgotPassword = (email) => api.post('/auth/forgot-password', { email });
+export const verifyResetCode = (email, code, purpose = 'password_reset') =>
+  api.post('/auth/verify-reset-code', { email, code, purpose });
+export const resetPassword = (email, code, new_password) =>
+  api.post('/auth/reset-password', { email, code, new_password });
+export const changePassword = (current_password, new_password) =>
+  api.post('/auth/change-password', { current_password, new_password });
+export const updateEmail = (email) => api.post('/auth/update-email', { email });
 
 // Customers
 export const getCustomers = () => api.get('/customers');

@@ -92,6 +92,17 @@ uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
 The API will be available at `http://localhost:8000`
 API documentation (Swagger UI) will be available at `http://localhost:8000/docs`
 
+### SMTP Configuration (Password Reset)
+
+Set these environment variables before starting the backend:
+
+- `SMTP_HOST` (default: `smtp.gmail.com`)
+- `SMTP_PORT` (default: `587`)
+- `SMTP_USER` (default: `dmiron@gmail.com`)
+- `SMTP_PASS` (required, Gmail app password)
+- `SMTP_FROM` (default: `SMTP_USER`)
+- `SMTP_USE_TLS` (default: `true`)
+
 ### Frontend Setup
 
 1. Navigate to the frontend directory:

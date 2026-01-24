@@ -1,8 +1,9 @@
-import { Navigate } from 'react-router-dom';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
 export default function ProtectedRoute({ children, requireAdmin = false }) {
-  const { isAuthenticated, isAdmin, loading } = useAuth();
+  const { isAuthenticated, isAdmin, loading, user } = useAuth();
+  const location = useLocation();
 
   if (loading) {
     return (
@@ -22,6 +23,10 @@ export default function ProtectedRoute({ children, requireAdmin = false }) {
         <div className="text-red-600">Access denied. Admin privileges required.</div>
       </div>
     );
+  }
+
+  if (user?.requires_email_update && location.pathname !== '/account') {
+    return <Navigate to="/account" replace />;
   }
 
   return children;

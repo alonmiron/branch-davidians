@@ -44,16 +44,31 @@ def check_and_create_admin():
                 CREATE TABLE users (
                     id INTEGER PRIMARY KEY AUTOINCREMENT,
                     username TEXT UNIQUE NOT NULL,
+                    email TEXT UNIQUE NOT NULL,
                     hashed_password TEXT NOT NULL,
                     full_name TEXT NOT NULL,
                     role TEXT NOT NULL,
                     is_active INTEGER DEFAULT 1,
+                    email_verified INTEGER DEFAULT 0,
+                    requires_email_update INTEGER DEFAULT 0,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
             cursor.execute("CREATE INDEX IF NOT EXISTS idx_users_username ON users(username)")
+            cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)")
             conn.commit()
             print("[OK] Users table created")
+        else:
+            cursor.execute("PRAGMA table_info(users)")
+            existing_columns = [col[1] for col in cursor.fetchall()]
+            if "email" not in existing_columns:
+                cursor.execute("ALTER TABLE users ADD COLUMN email TEXT NOT NULL DEFAULT ''")
+            if "email_verified" not in existing_columns:
+                cursor.execute("ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0")
+            if "requires_email_update" not in existing_columns:
+                cursor.execute("ALTER TABLE users ADD COLUMN requires_email_update INTEGER DEFAULT 0")
+            cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)")
+            conn.commit()
         
         # Check if admin user exists
         cursor.execute("SELECT COUNT(*) FROM users WHERE username = 'admin'")
@@ -63,8 +78,8 @@ def check_and_create_admin():
             print("[OK] Admin user already exists")
             # Show admin user info (without password)
             cursor.execute("""
-                SELECT username, full_name, role, is_active 
-                FROM users 
+                SELECT username, full_name, role, is_active, email, email_verified
+                FROM users
                 WHERE username = 'admin'
             """)
             admin_info = cursor.fetchone()
@@ -72,6 +87,15 @@ def check_and_create_admin():
             print(f"  Full Name: {admin_info[1]}")
             print(f"  Role: {admin_info[2]}")
             print(f"  Active: {bool(admin_info[3])}")
+            print(f"  Email: {admin_info[4]}")
+            print(f"  Email Verified: {bool(admin_info[5])}")
+            if not admin_info[4] or not admin_info[4].strip():
+                cursor.execute(
+                    "UPDATE users SET email = ?, email_verified = 1, requires_email_update = 0 WHERE username = 'admin'",
+                    ("dmiron@gmail.com",),
+                )
+                conn.commit()
+                print("  Email updated to dmiron@gmail.com")
         else:
             print("Admin user not found. Creating default admin user...")
             default_password = "admin123"
@@ -81,9 +105,9 @@ def check_and_create_admin():
             ).decode('utf-8')
             
             cursor.execute("""
-                INSERT INTO users (username, hashed_password, full_name, role, is_active)
-                VALUES (?, ?, ?, ?, ?)
-            """, ("admin", hashed_password, "Administrator", "admin", 1))
+                INSERT INTO users (username, email, hashed_password, full_name, role, is_active, email_verified, requires_email_update)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, ("admin", "dmiron@gmail.com", hashed_password, "Administrator", "admin", 1, 1, 0))
             conn.commit()
             
             print("[OK] Default admin user created successfully!")
@@ -99,14 +123,14 @@ def check_and_create_admin():
             print("")
         
         # List all users
-        cursor.execute("SELECT username, full_name, role, is_active FROM users")
+        cursor.execute("SELECT username, full_name, role, is_active, email FROM users")
         all_users = cursor.fetchall()
         print(f"\nTotal users in database: {len(all_users)}")
         if all_users:
             print("\nAll users:")
             for user in all_users:
                 status = "Active" if user[3] else "Inactive"
-                print(f"  - {user[0]} ({user[1]}) - {user[2]} - {status}")
+                print(f"  - {user[0]} ({user[1]}) - {user[2]} - {status} - {user[4]}")
         
     except Exception as e:
         conn.rollback()

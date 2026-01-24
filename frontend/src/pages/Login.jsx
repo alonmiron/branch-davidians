@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { MainLogo, SecondaryLogo } from '../components/Logo';
 
@@ -137,6 +137,11 @@ export default function Login() {
                       </span>
                     ) : 'Sign In'}
                   </button>
+                </div>
+                <div className="text-center">
+                  <Link to="/forgot-password" className="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                    Forgot password?
+                  </Link>
                 </div>
               </form>
 

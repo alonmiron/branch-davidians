@@ -4,6 +4,7 @@ from datetime import datetime
 
 class UserBase(BaseModel):
     username: str
+    email: str
     full_name: str
     role: str  # admin, payment_clerk
 
@@ -22,6 +23,7 @@ class UserUpdate(BaseModel):
     role: Optional[str] = None
     is_active: Optional[bool] = None
     password: Optional[str] = None
+    email: Optional[str] = None
 
     @field_validator('role')
     @classmethod
@@ -33,6 +35,8 @@ class UserUpdate(BaseModel):
 class UserResponse(UserBase):
     id: int
     is_active: bool
+    email_verified: bool
+    requires_email_update: bool
     created_at: datetime
 
     class Config:
@@ -46,5 +50,30 @@ class Token(BaseModel):
     access_token: str
     token_type: str
     user: UserResponse
+
+
+class ForgotPasswordRequest(BaseModel):
+    email: str
+
+
+class VerifyResetCodeRequest(BaseModel):
+    email: str
+    code: str
+    purpose: str = "password_reset"
+
+
+class ResetPasswordRequest(BaseModel):
+    email: str
+    code: str
+    new_password: str
+
+
+class ChangePasswordRequest(BaseModel):
+    current_password: str
+    new_password: str
+
+
+class UpdateEmailRequest(BaseModel):
+    email: str
 
 

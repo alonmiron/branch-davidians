@@ -4,8 +4,18 @@ from app.models.monthly_charge import MonthlyCharge
 from app.models.batch_file import BatchFile
 from app.models.error_code import ErrorCode
 from app.models.user import User
+from app.models.password_reset_code import PasswordResetCode
 from app.models.manual_payment import ManualPayment
 
-__all__ = ["Customer", "CardHistory", "MonthlyCharge", "BatchFile", "ErrorCode", "User", "ManualPayment"]
+__all__ = [
+    "Customer",
+    "CardHistory",
+    "MonthlyCharge",
+    "BatchFile",
+    "ErrorCode",
+    "User",
+    "PasswordResetCode",
+    "ManualPayment",
+]
 
 

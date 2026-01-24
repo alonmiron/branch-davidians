@@ -49,6 +49,21 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const refreshUser = async () => {
+    try {
+      const response = await api.get('/auth/me');
+      const userData = response.data;
+      setUser(userData);
+      localStorage.setItem('user', JSON.stringify(userData));
+      return { success: true, user: userData };
+    } catch (error) {
+      return {
+        success: false,
+        error: error.response?.data?.detail || 'Failed to refresh user'
+      };
+    }
+  };
+
   const logout = () => {
     setToken(null);
     setUser(null);
@@ -71,6 +86,7 @@ export const AuthProvider = ({ children }) => {
     token,
     loading,
     login,
+    refreshUser,
     logout,
     isAuthenticated,
     isAdmin
