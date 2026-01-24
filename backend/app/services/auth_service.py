@@ -15,9 +15,18 @@ ACCESS_TOKEN_EXPIRE_HOURS = 24
 
 security = HTTPBearer()
 
-def verify_password(plain_password: str, hashed_password: str) -> bool:
-    """Verify a password against its hash"""
-    return bcrypt.checkpw(plain_password.encode('utf-8'), hashed_password.encode('utf-8'))
+def verify_password(plain_password: str, hashed_password: Optional[str]) -> bool:
+    """Verify a password against its hash. Returns False if hash is missing/invalid."""
+    if not plain_password or not hashed_password or not hashed_password.strip():
+        return False
+    try:
+        if isinstance(hashed_password, str):
+            hashed_bytes = hashed_password.encode("utf-8")
+        else:
+            return False
+        return bcrypt.checkpw(plain_password.encode("utf-8"), hashed_bytes)
+    except (ValueError, TypeError, Exception):
+        return False
 
 def get_password_hash(password: str) -> str:
     """Hash a password"""

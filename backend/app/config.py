@@ -4,12 +4,19 @@ Configuration settings for the application
 import os
 from pathlib import Path
 
-# Base directory
+# Base directory (backend)
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-# Database
-DATABASE_PATH = os.path.join(BASE_DIR, "billing.db")
-SQLALCHEMY_DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
+# Database: allow override via env (e.g. production). Use absolute path for consistency.
+_DB_PATH = os.getenv("DATABASE_PATH")
+if _DB_PATH:
+    DATABASE_PATH = str(Path(_DB_PATH).resolve())
+else:
+    DATABASE_PATH = str((BASE_DIR / "billing.db").resolve())
+
+# SQLite URL: use forward slashes so it works on Linux and Windows
+_db_uri = Path(DATABASE_PATH).as_posix()
+SQLALCHEMY_DATABASE_URL = f"sqlite:///{_db_uri}"
 
 # API Settings
 API_HOST = os.getenv("API_HOST", "0.0.0.0")

@@ -33,9 +33,11 @@ python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 python -m app.init_db
+python app/migrations/add_manual_payments.py || true
+python fix_admin_user.py || true
 deactivate
 
-# Create systemd service
+# Create systemd service (run as deploy user so API can read/write billing.db)
 echo "Creating systemd service..."
 sudo tee /etc/systemd/system/billing-api.service > /dev/null <<EOF
 [Unit]
@@ -44,7 +46,7 @@ After=network.target
 
 [Service]
 Type=simple
-User=www-data
+User=$USER
 WorkingDirectory=$PROJECT_DIR/backend
 Environment="PATH=$PROJECT_DIR/backend/venv/bin"
 ExecStart=$PROJECT_DIR/backend/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000

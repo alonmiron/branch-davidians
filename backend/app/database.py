@@ -1,14 +1,13 @@
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
-import os
 
-# Database file will be stored in the backend directory
-DATABASE_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), "billing.db")
-SQLALCHEMY_DATABASE_URL = f"sqlite:///{DATABASE_PATH}"
+from app.config import DATABASE_PATH, SQLALCHEMY_DATABASE_URL
 
+# Same DB path as config; use timeout so locked DB retries instead of failing immediately
 engine = create_engine(
-    SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False}
+    SQLALCHEMY_DATABASE_URL,
+    connect_args={"check_same_thread": False, "timeout": 15},
 )
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 

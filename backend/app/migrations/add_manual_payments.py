@@ -9,15 +9,23 @@ This script:
 5. Creates a default admin user
 
 Run this script once to migrate your existing database.
+Uses the same DATABASE_PATH as the app (including DATABASE_PATH env override).
 """
-import sqlite3
+import sys
 import os
+
+# Ensure backend is on path when run as python app/migrations/add_manual_payments.py
+_backend = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+if _backend not in sys.path:
+    sys.path.insert(0, _backend)
+
+import sqlite3
 import bcrypt
 
 def get_database_path():
-    """Get the path to the billing.db database"""
-    backend_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-    return os.path.join(backend_dir, "billing.db")
+    """Use same path as app (config.DATABASE_PATH) so migration and API use one DB."""
+    from app.config import DATABASE_PATH
+    return DATABASE_PATH
 
 def migrate_database():
     """Run all migration steps"""
@@ -25,9 +33,9 @@ def migrate_database():
     
     if not os.path.exists(db_path):
         print(f"Database not found at {db_path}")
-        print("The database will be created automatically when you run the application.")
+        print("Run 'python -m app.init_db' first, then run this migration.")
         return
-    
+
     conn = sqlite3.connect(db_path)
     cursor = conn.cursor()
     
@@ -101,8 +109,15 @@ def migrate_database():
         
         # Step 4: Create default admin user
         print("4. Creating default admin user...")
-        cursor.execute("SELECT COUNT(*) FROM users WHERE username = 'admin'")
-        if cursor.fetchone()[0] == 0:
+        try:
+            cursor.execute("SELECT COUNT(*) FROM users WHERE username = 'admin'")
+            admin_count = cursor.fetchone()[0]
+        except sqlite3.OperationalError as e:
+            # Table might not exist yet, skip admin creation
+            print(f"   - Warning: Could not check for admin user: {e}")
+            admin_count = 1  # Skip creation
+        
+        if admin_count == 0:
             default_password = "admin123"
             hashed_password = bcrypt.hashpw(default_password.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
             cursor.execute("""
@@ -118,12 +133,12 @@ def migrate_database():
         
         conn.commit()
         
-        print("\n✓ Migration completed successfully!")
+        print("\n[OK] Migration completed successfully!")
         print("\nYou can now start the application with the new features.")
         
     except Exception as e:
         conn.rollback()
-        print(f"\n✗ Migration failed: {e}")
+        print(f"\n[FAIL] Migration failed: {e}")
         raise
     finally:
         conn.close()

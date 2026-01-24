@@ -1,6 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 from app.database import engine, Base
+from app.config import CORS_ORIGINS
 from app.routes import customers, charges, error_codes, card_history, auth, manual_payments, import_data
 
 # Create database tables
@@ -8,10 +10,10 @@ Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Tax Billing Management System", version="1.0.0")
 
-# CORS middleware for React frontend
+# CORS middleware for React frontend (uses config: localhost + PRODUCTION_URL if set)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -32,6 +34,16 @@ def root():
 
 @app.get("/health")
 def health_check():
-    return {"status": "healthy"}
+    """Basic health plus DB check. users_count helps verify user data is persisted."""
+    out = {"status": "healthy"}
+    try:
+        with engine.connect() as conn:
+            n = conn.execute(text("SELECT COUNT(*) FROM users")).scalar()
+            out["users_count"] = n
+            out["database"] = "ok"
+    except Exception as e:
+        out["database"] = "error"
+        out["database_detail"] = str(e)
+    return out
 
 
