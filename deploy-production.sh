@@ -157,6 +157,15 @@ npm run build || error "Failed to build frontend"
 
 log "Frontend built successfully"
 
+# Configure SMTP environment for backend service
+log ""
+log "=== Configuring SMTP Environment ==="
+if [ -f "$PROJECT_DIR/set-smtp-env.sh" ]; then
+    $SUDO_CMD bash "$PROJECT_DIR/set-smtp-env.sh" || warning "Failed to configure SMTP environment"
+else
+    warning "SMTP env script not found at $PROJECT_DIR/set-smtp-env.sh"
+fi
+
 # Restart Backend Service
 log ""
 log "=== Restarting Backend Service ==="

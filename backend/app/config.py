@@ -38,7 +38,7 @@ if PRODUCTION_URL:
 # SMTP Settings (Gmail by default)
 SMTP_HOST = os.getenv("SMTP_HOST", "smtp.gmail.com")
 SMTP_PORT = int(os.getenv("SMTP_PORT", "587"))
-SMTP_USER = os.getenv("SMTP_USER", "dmiron@gmail.com")
+SMTP_USER = os.getenv("SMTP_USER", "netdroppings@gmail.com")
 SMTP_PASS = os.getenv("SMTP_PASS", "")
 SMTP_FROM = os.getenv("SMTP_FROM", SMTP_USER)
 SMTP_USE_TLS = os.getenv("SMTP_USE_TLS", "true").lower() in ("1", "true", "yes")

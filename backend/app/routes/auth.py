@@ -161,7 +161,10 @@ def forgot_password(payload: ForgotPasswordRequest, db: Session = Depends(get_db
     user = db.query(User).filter(User.email == payload.email).first()
     if user and user.is_active:
         code = create_reset_code(db, user, "password_reset")
-        send_verification_code(user.email, code, "password_reset")
+        try:
+            send_verification_code(user.email, code, "password_reset")
+        except Exception as exc:
+            raise HTTPException(status_code=500, detail=str(exc)) from exc
     return {"message": "If the email exists, a code has been sent."}
 
 
@@ -245,7 +248,10 @@ def update_email(
     db.commit()
 
     code = create_reset_code(db, current_user, "email_verify")
-    send_verification_code(current_user.email, code, "email_verify")
+    try:
+        send_verification_code(current_user.email, code, "email_verify")
+    except Exception as exc:
+        raise HTTPException(status_code=500, detail=str(exc)) from exc
     return {"message": "Verification code sent"}
 
 
