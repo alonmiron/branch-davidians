@@ -73,8 +73,8 @@ $SUDO_CMD mkdir -p "$BACKUP_DIR"
 $SUDO_CMD cp -r "$PROJECT_DIR" "$BACKUP_DIR/" 2>/dev/null || warning "Backup creation failed, continuing anyway..."
 log "Backup created at: $BACKUP_DIR"
 
-# Pull latest code from GitHub
-log "Pulling latest code from GitHub (branch: $BRANCH)..."
+# Hard pull latest code from GitHub (overwrites local changes)
+log "Hard pulling latest code from GitHub (branch: $BRANCH) - local changes will be overwritten..."
 git fetch origin || error "Failed to fetch from origin"
 
 # Check if branch exists
@@ -88,9 +88,16 @@ if ! git rev-parse --verify "origin/$BRANCH" >/dev/null 2>&1; then
     fi
 fi
 
-# Get current commit hash before pull
+# Get current commit hash before reset
 CURRENT_COMMIT=$(git rev-parse HEAD)
-git pull origin "$BRANCH" || error "Failed to pull from GitHub"
+
+# Hard reset to match remote branch exactly (discards all local changes)
+log "Resetting local branch to match origin/$BRANCH (hard reset)..."
+git reset --hard "origin/$BRANCH" || error "Failed to reset to origin/$BRANCH"
+
+# Clean untracked files and directories (optional but thorough)
+log "Cleaning untracked files and directories..."
+git clean -fd || warning "Failed to clean untracked files"
 
 # Get new commit hash
 NEW_COMMIT=$(git rev-parse HEAD)
