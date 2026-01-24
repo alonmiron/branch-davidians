@@ -83,6 +83,7 @@ def register_user(
         is_active=True,
         email_verified=True,
         requires_email_update=False,
+        requires_password_reset=False,
     )
     db.add(db_user)
     db.commit()
@@ -227,6 +228,7 @@ def change_password(
     if not verify_password(payload.current_password, current_user.hashed_password):
         raise HTTPException(status_code=400, detail="Current password is incorrect")
     current_user.hashed_password = get_password_hash(payload.new_password)
+    current_user.requires_password_reset = False
     db.commit()
     return {"message": "Password updated"}
 

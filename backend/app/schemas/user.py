@@ -24,6 +24,7 @@ class UserUpdate(BaseModel):
     is_active: Optional[bool] = None
     password: Optional[str] = None
     email: Optional[str] = None
+    requires_password_reset: Optional[bool] = None
 
     @field_validator('role')
     @classmethod
@@ -37,6 +38,7 @@ class UserResponse(UserBase):
     is_active: bool
     email_verified: bool
     requires_email_update: bool
+    requires_password_reset: bool
     created_at: datetime
 
     class Config:

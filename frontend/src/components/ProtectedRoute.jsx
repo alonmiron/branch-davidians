@@ -29,6 +29,10 @@ export default function ProtectedRoute({ children, requireAdmin = false }) {
     return <Navigate to="/account" replace />;
   }
 
+  if (user?.requires_password_reset && location.pathname !== '/account') {
+    return <Navigate to="/account" replace />;
+  }
+
   return children;
 }
 

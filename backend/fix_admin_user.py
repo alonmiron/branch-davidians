@@ -51,6 +51,7 @@ def check_and_create_admin():
                     is_active INTEGER DEFAULT 1,
                     email_verified INTEGER DEFAULT 0,
                     requires_email_update INTEGER DEFAULT 0,
+                    requires_password_reset INTEGER DEFAULT 0,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 )
             """)
@@ -67,6 +68,8 @@ def check_and_create_admin():
                 cursor.execute("ALTER TABLE users ADD COLUMN email_verified INTEGER DEFAULT 0")
             if "requires_email_update" not in existing_columns:
                 cursor.execute("ALTER TABLE users ADD COLUMN requires_email_update INTEGER DEFAULT 0")
+            if "requires_password_reset" not in existing_columns:
+                cursor.execute("ALTER TABLE users ADD COLUMN requires_password_reset INTEGER DEFAULT 0")
             cursor.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_users_email ON users(email)")
             conn.commit()
         

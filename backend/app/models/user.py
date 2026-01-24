@@ -14,6 +14,7 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     email_verified = Column(Boolean, default=False)
     requires_email_update = Column(Boolean, default=False)
+    requires_password_reset = Column(Boolean, default=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 

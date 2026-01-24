@@ -69,6 +69,7 @@ export default function AccountSettings() {
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
+      await refreshUser();
     } catch (err) {
       setPasswordError(err.response?.data?.detail || 'Failed to change password');
     } finally {
@@ -86,6 +87,11 @@ export default function AccountSettings() {
         {user?.requires_email_update && (
           <div className="mt-4 rounded-lg bg-yellow-50 border-l-4 border-yellow-400 p-4 text-sm text-yellow-800">
             Please update your email to continue using the system.
+          </div>
+        )}
+        {user?.requires_password_reset && (
+          <div className="mt-4 rounded-lg bg-yellow-50 border-l-4 border-yellow-400 p-4 text-sm text-yellow-800">
+            Your password must be updated before you can access other pages.
           </div>
         )}
       </div>

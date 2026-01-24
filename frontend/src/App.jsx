@@ -11,9 +11,10 @@ import Customers from './pages/Customers'
 import FailedCharges from './pages/FailedCharges'
 import BatchOperations from './pages/BatchOperations'
 import ManualPayments from './pages/ManualPayments'
+import AdminUsers from './pages/AdminUsers'
 
 function AppContent() {
-  const { isAuthenticated, user, logout } = useAuth();
+  const { isAuthenticated, isAdmin, user, logout } = useAuth();
 
   if (!isAuthenticated()) {
     return (
@@ -62,6 +63,17 @@ function AppContent() {
                 </svg>
                 Dashboard
               </Link>
+              {isAdmin() && (
+                <Link
+                  to="/admin/users"
+                  className="border-b-2 border-transparent text-gray-600 hover:border-blue-500 hover:text-blue-600 inline-flex items-center px-2 xl:px-3 pt-1 text-sm font-medium transition duration-150"
+                >
+                  <svg className="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5.121 17.804A4 4 0 017 16h10a4 4 0 011.879.804M15 11a3 3 0 11-6 0 3 3 0 016 0zM12 4a8 8 0 100 16 8 8 0 000-16z" />
+                  </svg>
+                  Admin Users
+                </Link>
+              )}
               <Link
                 to="/customers"
                 className="border-b-2 border-transparent text-gray-600 hover:border-blue-500 hover:text-blue-600 inline-flex items-center px-2 xl:px-3 pt-1 text-sm font-medium transition duration-150"
@@ -145,6 +157,7 @@ function AppContent() {
           <Route path="/batch" element={<ProtectedRoute><BatchOperations /></ProtectedRoute>} />
           <Route path="/failed" element={<ProtectedRoute><FailedCharges /></ProtectedRoute>} />
           <Route path="/account" element={<ProtectedRoute><AccountSettings /></ProtectedRoute>} />
+          <Route path="/admin/users" element={<ProtectedRoute requireAdmin><AdminUsers /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
