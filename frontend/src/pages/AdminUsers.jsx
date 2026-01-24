@@ -7,24 +7,49 @@ const defaultForm = {
   email: '',
   full_name: '',
   role: 'payment_clerk',
+  phone_country: '+972',
+  phone_number: '',
   password: '',
 };
+
+const countryCodes = [
+  { value: '+972', label: 'Israel (+972)' },
+  { value: '+1', label: 'United States (+1)' },
+  { value: '+44', label: 'United Kingdom (+44)' },
+  { value: '+33', label: 'France (+33)' },
+  { value: '+49', label: 'Germany (+49)' },
+  { value: '+34', label: 'Spain (+34)' },
+  { value: '+39', label: 'Italy (+39)' },
+];
 
 export default function AdminUsers() {
   const { user: currentUser } = useAuth();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [savingId, setSavingId] = useState(null);
+  const [passwordByUser, setPasswordByUser] = useState({});
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [form, setForm] = useState(defaultForm);
   const [formLoading, setFormLoading] = useState(false);
+  const [hebrewFormat, setHebrewFormat] = useState(
+    () => localStorage.getItem('adminUsersHebrewFormat') === 'true'
+  );
+
+  useEffect(() => {
+    localStorage.setItem('adminUsersHebrewFormat', hebrewFormat ? 'true' : 'false');
+  }, [hebrewFormat]);
 
   const fetchUsers = async () => {
     setError('');
     try {
       const response = await getUsers();
-      setUsers(response.data || []);
+      const normalized = (response.data || []).map((u) => ({
+        ...u,
+        phone_country: u.phone_country || '',
+        phone_number: u.phone_number || '',
+      }));
+      setUsers(normalized);
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to load users');
     } finally {
@@ -70,6 +95,8 @@ export default function AdminUsers() {
         role: user.role,
         is_active: user.is_active,
         requires_password_reset: user.requires_password_reset,
+        phone_country: user.phone_country,
+        phone_number: user.phone_number,
       });
       setMessage(`Updated ${user.username}.`);
     } catch (err) {
@@ -115,13 +142,95 @@ export default function AdminUsers() {
     }
   };
 
+  const handleSetPassword = async (user) => {
+    const newPassword = passwordByUser[user.id];
+    if (!newPassword) {
+      return;
+    }
+    setError('');
+    setMessage('');
+    setSavingId(user.id);
+    try {
+      await updateUser(user.id, { password: newPassword });
+      setMessage(`Password updated for ${user.username}.`);
+      setPasswordByUser((prev) => ({ ...prev, [user.id]: '' }));
+    } catch (err) {
+      setError(err.response?.data?.detail || 'Failed to update password');
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const labels = hebrewFormat
+    ? {
+        title: 'ניהול משתמשים',
+        subtitle: 'ניהול גישה, תפקידים ואיפוס סיסמה.',
+        addUser: 'הוספת משתמש',
+        allUsers: 'כל המשתמשים',
+        username: 'שם משתמש',
+        email: 'אימייל',
+        fullName: 'שם מלא',
+        role: 'תפקיד',
+        active: 'פעיל',
+        pwdReset: 'איפוס סיסמה',
+        phone: 'טלפון',
+        countryCode: 'קידומת',
+        phoneNumber: 'מספר',
+        tempPassword: 'סיסמה זמנית',
+        createUser: 'צור משתמש',
+        saving: 'שומר...',
+        save: 'שמור',
+        forceReset: 'חייב איפוס',
+        delete: 'מחק',
+        setPassword: 'עדכון סיסמה',
+        newPassword: 'סיסמה חדשה',
+        hebrewToggle: 'תצוגת עברית',
+        actions: 'פעולות',
+      }
+    : {
+        title: 'Admin users',
+        subtitle: 'Manage user access, roles, and forced password resets.',
+        addUser: 'Add user',
+        allUsers: 'All users',
+        username: 'Username',
+        email: 'Email',
+        fullName: 'Full name',
+        role: 'Role',
+        active: 'Active',
+        pwdReset: 'Pwd reset',
+        phone: 'Phone',
+        countryCode: 'Country code',
+        phoneNumber: 'Phone number',
+        tempPassword: 'Temporary password',
+        createUser: 'Create user',
+        saving: 'Saving...',
+        save: 'Save',
+        forceReset: 'Force reset',
+        delete: 'Delete',
+        setPassword: 'Set password',
+        newPassword: 'New password',
+        hebrewToggle: 'Hebrew format',
+        actions: 'Actions',
+      };
+
   return (
-    <div className="space-y-6">
+    <div className={`space-y-6 ${hebrewFormat ? 'text-right' : ''}`} dir={hebrewFormat ? 'rtl' : 'ltr'}>
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-bold text-gray-800 mb-2">Admin users</h2>
-        <p className="text-sm text-gray-600">
-          Manage user access, roles, and forced password resets.
-        </p>
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-gray-800 mb-2">{labels.title}</h2>
+            <p className="text-sm text-gray-600">{labels.subtitle}</p>
+          </div>
+          <label className="inline-flex items-center space-x-2 text-sm text-gray-700">
+            <input
+              type="checkbox"
+              className="h-4 w-4"
+              checked={hebrewFormat}
+              onChange={(e) => setHebrewFormat(e.target.checked)}
+            />
+            <span>{labels.hebrewToggle}</span>
+          </label>
+        </div>
       </div>
 
       {message && (
@@ -136,86 +245,7 @@ export default function AdminUsers() {
       )}
 
       <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">Add user</h3>
-        <form className="grid gap-4 md:grid-cols-2" onSubmit={handleCreateUser}>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="username">
-              Username
-            </label>
-            <input
-              id="username"
-              className="block w-full px-4 py-3 border border-gray-300 rounded-lg"
-              value={form.username}
-              onChange={(e) => setForm({ ...form, username: e.target.value })}
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="email">
-              Email
-            </label>
-            <input
-              id="email"
-              type="email"
-              className="block w-full px-4 py-3 border border-gray-300 rounded-lg"
-              value={form.email}
-              onChange={(e) => setForm({ ...form, email: e.target.value })}
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="full_name">
-              Full name
-            </label>
-            <input
-              id="full_name"
-              className="block w-full px-4 py-3 border border-gray-300 rounded-lg"
-              value={form.full_name}
-              onChange={(e) => setForm({ ...form, full_name: e.target.value })}
-              required
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="role">
-              Role
-            </label>
-            <select
-              id="role"
-              className="block w-full px-4 py-3 border border-gray-300 rounded-lg"
-              value={form.role}
-              onChange={(e) => setForm({ ...form, role: e.target.value })}
-            >
-              <option value="payment_clerk">Payment clerk</option>
-              <option value="admin">Admin</option>
-            </select>
-          </div>
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="password">
-              Temporary password
-            </label>
-            <input
-              id="password"
-              type="password"
-              className="block w-full px-4 py-3 border border-gray-300 rounded-lg"
-              value={form.password}
-              onChange={(e) => setForm({ ...form, password: e.target.value })}
-              required
-            />
-          </div>
-          <div className="md:col-span-2">
-            <button
-              type="submit"
-              disabled={formLoading}
-              className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
-            >
-              {formLoading ? 'Creating...' : 'Create user'}
-            </button>
-          </div>
-        </form>
-      </div>
-
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-800 mb-4">All users</h3>
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">{labels.allUsers}</h3>
         {loading ? (
           <div className="text-gray-600">Loading users...</div>
         ) : (
@@ -223,13 +253,15 @@ export default function AdminUsers() {
             <table className="min-w-full text-sm">
               <thead className="text-left text-gray-600 border-b">
                 <tr>
-                  <th className="py-2 pr-4">Username</th>
-                  <th className="py-2 pr-4">Email</th>
-                  <th className="py-2 pr-4">Name</th>
-                  <th className="py-2 pr-4">Role</th>
-                  <th className="py-2 pr-4">Active</th>
-                  <th className="py-2 pr-4">Pwd reset</th>
-                  <th className="py-2 pr-4">Actions</th>
+                  <th className="py-2 pr-4">{labels.username}</th>
+                  <th className="py-2 pr-4">{labels.email}</th>
+                  <th className="py-2 pr-4">{labels.fullName}</th>
+                  <th className="py-2 pr-4">{labels.role}</th>
+                  <th className="py-2 pr-4">{labels.phone}</th>
+                  <th className="py-2 pr-4">{labels.active}</th>
+                  <th className="py-2 pr-4">{labels.pwdReset}</th>
+                  <th className="py-2 pr-4">{labels.setPassword}</th>
+                  <th className="py-2 pr-4">{labels.actions}</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
@@ -258,7 +290,30 @@ export default function AdminUsers() {
                       >
                         <option value="payment_clerk">Payment clerk</option>
                         <option value="admin">Admin</option>
+                        <option value="mehamemet">Mehamemet</option>
                       </select>
+                    </td>
+                    <td className="py-3 pr-4">
+                      <div className="flex items-center space-x-2">
+                        <select
+                          className="border border-gray-200 rounded px-2 py-1"
+                          value={u.phone_country}
+                          onChange={(e) => handleRowChange(u.id, 'phone_country', e.target.value)}
+                        >
+                          <option value="">{labels.countryCode}</option>
+                          {countryCodes.map((code) => (
+                            <option key={code.value} value={code.value}>
+                              {code.label}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          className="w-full border border-gray-200 rounded px-2 py-1"
+                          placeholder={labels.phoneNumber}
+                          value={u.phone_number}
+                          onChange={(e) => handleRowChange(u.id, 'phone_number', e.target.value)}
+                        />
+                      </div>
                     </td>
                     <td className="py-3 pr-4">
                       <input
@@ -276,6 +331,30 @@ export default function AdminUsers() {
                         }
                       />
                     </td>
+                    <td className="py-3 pr-4">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="password"
+                          className="border border-gray-200 rounded px-2 py-1"
+                          placeholder={labels.newPassword}
+                          value={passwordByUser[u.id] || ''}
+                          onChange={(e) =>
+                            setPasswordByUser((prev) => ({
+                              ...prev,
+                              [u.id]: e.target.value,
+                            }))
+                          }
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleSetPassword(u)}
+                          disabled={savingId === u.id || !(passwordByUser[u.id] || '')}
+                          className="px-3 py-1 rounded bg-indigo-600 text-white disabled:opacity-50"
+                        >
+                          {labels.setPassword}
+                        </button>
+                      </div>
+                    </td>
                     <td className="py-3 pr-4 space-x-2">
                       <button
                         type="button"
@@ -283,7 +362,7 @@ export default function AdminUsers() {
                         disabled={savingId === u.id}
                         className="px-3 py-1 rounded bg-blue-600 text-white disabled:opacity-50"
                       >
-                        Save
+                        {savingId === u.id ? labels.saving : labels.save}
                       </button>
                       <button
                         type="button"
@@ -291,7 +370,7 @@ export default function AdminUsers() {
                         disabled={savingId === u.id}
                         className="px-3 py-1 rounded bg-yellow-500 text-white disabled:opacity-50"
                       >
-                        Force reset
+                        {labels.forceReset}
                       </button>
                       <button
                         type="button"
@@ -299,7 +378,7 @@ export default function AdminUsers() {
                         disabled={savingId === u.id || u.id === currentUser?.id}
                         className="px-3 py-1 rounded bg-red-600 text-white disabled:opacity-50"
                       >
-                        Delete
+                        {labels.delete}
                       </button>
                     </td>
                   </tr>
@@ -308,6 +387,116 @@ export default function AdminUsers() {
             </table>
           </div>
         )}
+      </div>
+
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-gray-800 mb-4">{labels.addUser}</h3>
+        <form className="grid gap-4 md:grid-cols-2" onSubmit={handleCreateUser}>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="username">
+              {labels.username}
+            </label>
+            <input
+              id="username"
+              className="block w-full px-4 py-3 border border-gray-300 rounded-lg"
+              value={form.username}
+              onChange={(e) => setForm({ ...form, username: e.target.value })}
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="email">
+              {labels.email}
+            </label>
+            <input
+              id="email"
+              type="email"
+              className="block w-full px-4 py-3 border border-gray-300 rounded-lg"
+              value={form.email}
+              onChange={(e) => setForm({ ...form, email: e.target.value })}
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="full_name">
+              {labels.fullName}
+            </label>
+            <input
+              id="full_name"
+              className="block w-full px-4 py-3 border border-gray-300 rounded-lg"
+              value={form.full_name}
+              onChange={(e) => setForm({ ...form, full_name: e.target.value })}
+              required
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="role">
+              {labels.role}
+            </label>
+            <select
+              id="role"
+              className="block w-full px-4 py-3 border border-gray-300 rounded-lg"
+              value={form.role}
+              onChange={(e) => setForm({ ...form, role: e.target.value })}
+            >
+              <option value="payment_clerk">Payment clerk</option>
+              <option value="admin">Admin</option>
+              <option value="mehamemet">Mehamemet</option>
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="phone_country">
+              {labels.countryCode}
+            </label>
+            <select
+              id="phone_country"
+              className="block w-full px-4 py-3 border border-gray-300 rounded-lg"
+              value={form.phone_country}
+              onChange={(e) => setForm({ ...form, phone_country: e.target.value })}
+              required
+            >
+              {countryCodes.map((code) => (
+                <option key={code.value} value={code.value}>
+                  {code.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="phone_number">
+              {labels.phoneNumber}
+            </label>
+            <input
+              id="phone_number"
+              className="block w-full px-4 py-3 border border-gray-300 rounded-lg"
+              value={form.phone_number}
+              onChange={(e) => setForm({ ...form, phone_number: e.target.value })}
+              required
+            />
+          </div>
+          <div className="md:col-span-2">
+            <label className="block text-sm font-medium text-gray-700 mb-2" htmlFor="password">
+              {labels.tempPassword}
+            </label>
+            <input
+              id="password"
+              type="password"
+              className="block w-full px-4 py-3 border border-gray-300 rounded-lg"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              required
+            />
+          </div>
+          <div className="md:col-span-2">
+            <button
+              type="submit"
+              disabled={formLoading}
+              className="inline-flex items-center px-4 py-2 rounded-lg text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 disabled:opacity-50"
+            >
+              {formLoading ? 'Creating...' : labels.createUser}
+            </button>
+          </div>
+        </form>
       </div>
     </div>
   );

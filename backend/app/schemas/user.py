@@ -7,12 +7,14 @@ class UserBase(BaseModel):
     email: str
     full_name: str
     role: str  # admin, payment_clerk
+    phone_country: Optional[str] = None
+    phone_number: Optional[str] = None
 
     @field_validator('role')
     @classmethod
     def validate_role(cls, v):
-        if v not in ['admin', 'payment_clerk']:
-            raise ValueError('role must be admin or payment_clerk')
+        if v not in ['admin', 'payment_clerk', 'mehamemet']:
+            raise ValueError('role must be admin, payment_clerk, or mehamemet')
         return v
 
 class UserCreate(UserBase):
@@ -25,12 +27,14 @@ class UserUpdate(BaseModel):
     password: Optional[str] = None
     email: Optional[str] = None
     requires_password_reset: Optional[bool] = None
+    phone_country: Optional[str] = None
+    phone_number: Optional[str] = None
 
     @field_validator('role')
     @classmethod
     def validate_role(cls, v):
-        if v is not None and v not in ['admin', 'payment_clerk']:
-            raise ValueError('role must be admin or payment_clerk')
+        if v is not None and v not in ['admin', 'payment_clerk', 'mehamemet']:
+            raise ValueError('role must be admin, payment_clerk, or mehamemet')
         return v
 
 class UserResponse(UserBase):

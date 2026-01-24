@@ -80,6 +80,8 @@ def register_user(
         hashed_password=hashed_password,
         full_name=user.full_name,
         role=user.role,
+        phone_country=user.phone_country,
+        phone_number=user.phone_number,
         is_active=True,
         email_verified=True,
         requires_email_update=False,

@@ -15,6 +15,8 @@ class User(Base):
     email_verified = Column(Boolean, default=False)
     requires_email_update = Column(Boolean, default=False)
     requires_password_reset = Column(Boolean, default=False)
+    phone_country = Column(String, nullable=True)
+    phone_number = Column(String, nullable=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
 
