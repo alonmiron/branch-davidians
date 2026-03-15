@@ -7,6 +7,13 @@ from pathlib import Path
 # Base directory (backend)
 BASE_DIR = Path(__file__).resolve().parent.parent
 
+# Legal archive storage: directory where batch/result CSVs are saved on disk
+_FILES_PATH = os.getenv("FILES_STORAGE_PATH")
+if _FILES_PATH:
+    FILES_STORAGE_PATH = str(Path(_FILES_PATH).resolve())
+else:
+    FILES_STORAGE_PATH = str((BASE_DIR / "cc_archives").resolve())
+
 # Database: allow override via env (e.g. production). Use absolute path for consistency.
 _DB_PATH = os.getenv("DATABASE_PATH")
 if _DB_PATH:
@@ -42,6 +49,9 @@ SMTP_USER = os.getenv("SMTP_USER", "netdroppings@gmail.com")
 SMTP_PASS = os.getenv("SMTP_PASS", "")
 SMTP_FROM = os.getenv("SMTP_FROM", SMTP_USER)
 SMTP_USE_TLS = os.getenv("SMTP_USE_TLS", "true").lower() in ("1", "true", "yes")
+
+# Monthly report destination
+CC_REPORT_EMAIL = os.getenv("CC_REPORT_EMAIL", "dmiron@gmail.com")
 
 
 

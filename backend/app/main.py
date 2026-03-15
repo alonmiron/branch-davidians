@@ -4,6 +4,7 @@ from sqlalchemy import text
 from app.database import engine, Base
 from app.config import CORS_ORIGINS
 from app.routes import customers, charges, error_codes, card_history, auth, manual_payments, import_data
+from app.routes import cc_residents, cc_payments, cc_archives
 
 # Create database tables
 Base.metadata.create_all(bind=engine)
@@ -27,6 +28,9 @@ app.include_router(error_codes.router, prefix="/api/error-codes", tags=["error-c
 app.include_router(card_history.router, prefix="/api/card-history", tags=["card-history"])
 app.include_router(manual_payments.router, prefix="/api/manual-payments", tags=["manual-payments"])
 app.include_router(import_data.router, prefix="/api/import", tags=["data-import"])
+app.include_router(cc_residents.router, prefix="/api/cc/residents", tags=["cc-residents"])
+app.include_router(cc_payments.router, prefix="/api/cc/payments", tags=["cc-payments"])
+app.include_router(cc_archives.router, prefix="/api/cc/archives", tags=["cc-archives"])
 
 @app.get("/")
 def root():

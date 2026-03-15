@@ -37,13 +37,22 @@ class UserUpdate(BaseModel):
             raise ValueError('role must be admin, payment_clerk, or mehamemet')
         return v
 
+def _coerce_bool(v):
+    """Accept None from DB (e.g. SQLite) and coerce to bool for response."""
+    return False if v is None else bool(v)
+
 class UserResponse(UserBase):
     id: int
-    is_active: bool
-    email_verified: bool
-    requires_email_update: bool
-    requires_password_reset: bool
+    is_active: Optional[bool] = True
+    email_verified: Optional[bool] = False
+    requires_email_update: Optional[bool] = False
+    requires_password_reset: Optional[bool] = False
     created_at: datetime
+
+    _normalize_bools = field_validator(
+        "is_active", "email_verified", "requires_email_update", "requires_password_reset",
+        mode="before",
+    )(lambda v: False if v is None else bool(v))
 
     class Config:
         from_attributes = True

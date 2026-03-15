@@ -114,6 +114,50 @@ export const uploadCsvForPreview = (file) => {
 };
 export const bulkImportCustomers = (data) => api.post('/import/customers', data);
 
+// ── Credit Card Payments module ──────────────────────────────────────────────
+
+// Residents
+export const getCcResidents = () => api.get('/cc/residents');
+export const getCcResident = (id) => api.get(`/cc/residents/${id}`);
+export const createCcResident = (data) => api.post('/cc/residents', data);
+export const updateCcResident = (id, data) => api.put(`/cc/residents/${id}`, data);
+export const deleteCcResident = (id) => api.delete(`/cc/residents/${id}`);
+
+// Custom fields
+export const getCcCustomFields = (residentId) => api.get(`/cc/residents/${residentId}/custom-fields`);
+export const createCcCustomField = (residentId, data) => api.post(`/cc/residents/${residentId}/custom-fields`, data);
+export const updateCcCustomField = (fieldId, data) => api.put(`/cc/residents/custom-fields/${fieldId}`, data);
+export const deleteCcCustomField = (fieldId) => api.delete(`/cc/residents/custom-fields/${fieldId}`);
+
+// Overview
+export const getCcOverview = (year) => api.get('/cc/payments/overview', { params: { year } });
+
+// Monthly entries
+export const updateCcEntry = (entryId, data) => api.put(`/cc/payments/entries/${entryId}`, data);
+export const deleteCcEntry = (entryId) => api.delete(`/cc/payments/entries/${entryId}`);
+export const createCcManualEntry = (data) => api.post('/cc/payments/entries/manual', data);
+
+// Batch generation
+export const generateCcBatch = (data) => api.post('/cc/payments/generate-batch', data, { responseType: 'blob' });
+export const generateCcBatchAndEmail = (data) => api.post('/cc/payments/generate-batch-and-email', data);
+
+// Result upload
+export const uploadCcResults = (file, year, month) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  return api.post('/cc/payments/upload-results', formData, {
+    params: { year, month },
+    headers: { 'Content-Type': 'multipart/form-data' },
+  });
+};
+
+// Archives
+export const getCcArchives = (params) => api.get('/cc/archives', { params });
+export const getCcArchive = (id) => api.get(`/cc/archives/${id}`);
+export const downloadCcArchive = (id) => api.get(`/cc/archives/${id}/download`, { responseType: 'blob' });
+export const viewCcArchive = (id) => api.get(`/cc/archives/${id}/view`);
+export const deleteCcArchive = (id) => api.delete(`/cc/archives/${id}`);
+
 export default api;
 
 

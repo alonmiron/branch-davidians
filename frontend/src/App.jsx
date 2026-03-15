@@ -12,6 +12,8 @@ import FailedCharges from './pages/FailedCharges'
 import BatchOperations from './pages/BatchOperations'
 import ManualPayments from './pages/ManualPayments'
 import AdminUsers from './pages/AdminUsers'
+import CreditCardPayments from './pages/CreditCardPayments'
+import CreditCardArchive from './pages/CreditCardArchive'
 
 function AppContent() {
   const { isAuthenticated, isAdmin, user, logout } = useAuth();
@@ -93,6 +95,24 @@ function AppContent() {
                 Payments
               </Link>
               <Link
+                to="/cc-payments"
+                className="border-b-2 border-transparent text-gray-600 hover:border-blue-500 hover:text-blue-600 inline-flex items-center px-2 xl:px-3 pt-1 text-sm font-medium transition duration-150"
+              >
+                <svg className="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                </svg>
+                CC Payments
+              </Link>
+              <Link
+                to="/cc-archive"
+                className="border-b-2 border-transparent text-gray-600 hover:border-blue-500 hover:text-blue-600 inline-flex items-center px-2 xl:px-3 pt-1 text-sm font-medium transition duration-150"
+              >
+                <svg className="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+                </svg>
+                Archive
+              </Link>
+              <Link
                 to="/batch"
                 className="border-b-2 border-transparent text-gray-600 hover:border-blue-500 hover:text-blue-600 inline-flex items-center px-2 xl:px-3 pt-1 text-sm font-medium transition duration-150"
               >
@@ -158,6 +178,8 @@ function AppContent() {
           <Route path="/failed" element={<ProtectedRoute><FailedCharges /></ProtectedRoute>} />
           <Route path="/account" element={<ProtectedRoute><AccountSettings /></ProtectedRoute>} />
           <Route path="/admin/users" element={<ProtectedRoute requireAdmin><AdminUsers /></ProtectedRoute>} />
+          <Route path="/cc-payments" element={<ProtectedRoute><CreditCardPayments /></ProtectedRoute>} />
+          <Route path="/cc-archive" element={<ProtectedRoute><CreditCardArchive /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
