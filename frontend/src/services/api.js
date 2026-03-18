@@ -10,13 +10,23 @@ const api = axios.create({
   },
 });
 
-// Add request interceptor to include JWT token
+// Add request interceptor to include JWT token and active community context
 api.interceptors.request.use(
   (config) => {
     const token = localStorage.getItem('token');
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    // Inject community context for super admin impersonation
+    try {
+      const raw = localStorage.getItem('activeCommunity');
+      if (raw) {
+        const community = JSON.parse(raw);
+        if (community?.id) {
+          config.headers['X-Community-Id'] = String(community.id);
+        }
+      }
+    } catch { /* ignore */ }
     return config;
   },
   (error) => {
@@ -150,6 +160,22 @@ export const uploadCcResults = (file, year, month) => {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 };
+
+// ── Communities module (super admin) ─────────────────────────────────────────
+
+export const getCommunities = () => api.get('/communities');
+export const getCommunity = (id) => api.get(`/communities/${id}`);
+export const createCommunity = (data) => api.post('/communities', data);
+export const updateCommunity = (id, data) => api.put(`/communities/${id}`, data);
+export const deleteCommunity = (id) => api.delete(`/communities/${id}`);
+
+// ── Residents module ─────────────────────────────────────────────────────────
+
+export const getResidents = (params) => api.get('/residents', { params });
+export const getResident = (id) => api.get(`/residents/${id}`);
+export const createResident = (data) => api.post('/residents', data);
+export const updateResident = (id, data) => api.put(`/residents/${id}`, data);
+export const deleteResident = (id) => api.delete(`/residents/${id}`);
 
 // Archives
 export const getCcArchives = (params) => api.get('/cc/archives', { params });

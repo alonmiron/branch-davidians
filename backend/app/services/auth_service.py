@@ -93,5 +93,42 @@ def require_role(allowed_roles: list[str]):
 
 # Common role dependencies
 require_admin = require_role(["admin"])
+require_super_admin = require_role(["super_admin"])
 require_auth = get_current_user  # Any authenticated user
+
+
+def get_community_id(
+    current_user: User,
+    x_community_id: Optional[int] = None,
+) -> Optional[int]:
+    """
+    Resolve which community_id to scope a query to.
+    - super_admin: can pass X-Community-Id to view any community's data; without it sees all.
+    - All other roles: always scoped to their own community_id.
+    """
+    if current_user.role == "super_admin":
+        return x_community_id  # None = unscoped (all communities)
+    return current_user.community_id
+
+# ─── Residents permission helpers ────────────────────────────────────────────
+
+# Roles that can read resident data (all authenticated roles)
+RESIDENTS_READ_ROLES = ["admin", "manager", "data_entry", "public", "payment_clerk", "mehamemet"]
+# Roles that can create/edit residents
+RESIDENTS_WRITE_ROLES = ["admin", "manager", "data_entry", "payment_clerk", "mehamemet"]
+# Roles that can delete residents
+RESIDENTS_DELETE_ROLES = ["admin"]
+
+def can_read_residents(user: User) -> bool:
+    return user.role in RESIDENTS_READ_ROLES
+
+def can_write_residents(user: User) -> bool:
+    return user.role in RESIDENTS_WRITE_ROLES
+
+def can_delete_residents(user: User) -> bool:
+    return user.role in RESIDENTS_DELETE_ROLES
+
+require_residents_read = require_role(RESIDENTS_READ_ROLES)
+require_residents_write = require_role(RESIDENTS_WRITE_ROLES)
+require_residents_delete = require_role(RESIDENTS_DELETE_ROLES)
 

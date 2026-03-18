@@ -1,5 +1,6 @@
-import { BrowserRouter as Router, Routes, Route, Link, Navigate } from 'react-router-dom'
+import { BrowserRouter as Router, Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from './context/AuthContext'
+import { CommunityProvider, useCommunity } from './context/CommunityContext'
 import ProtectedRoute from './components/ProtectedRoute'
 import { MainLogo, SecondaryLogo } from './components/Logo'
 import Login from './pages/Login'
@@ -14,9 +15,13 @@ import ManualPayments from './pages/ManualPayments'
 import AdminUsers from './pages/AdminUsers'
 import CreditCardPayments from './pages/CreditCardPayments'
 import CreditCardArchive from './pages/CreditCardArchive'
+import Residents from './pages/Residents'
+import SuperAdminDashboard from './pages/SuperAdminDashboard'
 
 function AppContent() {
-  const { isAuthenticated, isAdmin, user, logout } = useAuth();
+  const { isAuthenticated, isAdmin, isSuperAdmin, canReadResidents, user, logout } = useAuth();
+  const { activeCommunity, clearActiveCommunity } = useCommunity();
+  const navigate = useNavigate();
 
   if (!isAuthenticated()) {
     return (
@@ -29,8 +34,39 @@ function AppContent() {
     );
   }
 
+  // Super admin with no active community → redirect to super admin dashboard
+  if (isSuperAdmin() && !activeCommunity) {
+    return (
+      <Routes>
+        <Route path="/super-admin" element={<ProtectedRoute requireSuperAdmin><SuperAdminDashboard /></ProtectedRoute>} />
+        <Route path="*" element={<Navigate to="/super-admin" replace />} />
+      </Routes>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* Community context banner — shown when super admin is viewing a specific community */}
+      {isSuperAdmin() && activeCommunity && (
+        <div className="bg-indigo-700 text-white text-sm px-4 py-2 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <svg className="h-4 w-4 opacity-75" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            </svg>
+            <span>Viewing as Super Admin: <strong>{activeCommunity.name}</strong></span>
+          </div>
+          <button
+            onClick={() => { clearActiveCommunity(); navigate('/super-admin'); }}
+            className="inline-flex items-center gap-1.5 bg-indigo-600 hover:bg-indigo-500 border border-indigo-500 px-3 py-1 rounded text-xs font-medium transition"
+          >
+            <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            Exit to Super Admin
+          </button>
+        </div>
+      )}
       <nav className="bg-white shadow-md border-b-2 border-blue-100">
         <div className="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
@@ -76,6 +112,18 @@ function AppContent() {
                   Admin Users
                 </Link>
               )}
+              {isSuperAdmin() && (
+                <Link
+                  to="/super-admin"
+                  onClick={() => clearActiveCommunity()}
+                  className="border-b-2 border-transparent text-indigo-600 hover:border-indigo-500 hover:text-indigo-700 inline-flex items-center px-2 xl:px-3 pt-1 text-sm font-semibold transition duration-150"
+                >
+                  <svg className="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
+                  </svg>
+                  Super Admin
+                </Link>
+              )}
               <Link
                 to="/customers"
                 className="border-b-2 border-transparent text-gray-600 hover:border-blue-500 hover:text-blue-600 inline-flex items-center px-2 xl:px-3 pt-1 text-sm font-medium transition duration-150"
@@ -85,6 +133,18 @@ function AppContent() {
                 </svg>
                 Customers
               </Link>
+              {canReadResidents() && (
+                <Link
+                  to="/residents"
+                  className="border-b-2 border-transparent text-gray-600 hover:border-blue-500 hover:text-blue-600 inline-flex items-center px-2 xl:px-3 pt-1 text-sm font-medium transition duration-150"
+                >
+                  <svg className="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9.75L12 4l9 5.75V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.75z" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 21V12h6v9" />
+                  </svg>
+                  Residents
+                </Link>
+              )}
               <Link
                 to="/manual-payments"
                 className="border-b-2 border-transparent text-gray-600 hover:border-blue-500 hover:text-blue-600 inline-flex items-center px-2 xl:px-3 pt-1 text-sm font-medium transition duration-150"
@@ -180,6 +240,8 @@ function AppContent() {
           <Route path="/admin/users" element={<ProtectedRoute requireAdmin><AdminUsers /></ProtectedRoute>} />
           <Route path="/cc-payments" element={<ProtectedRoute><CreditCardPayments /></ProtectedRoute>} />
           <Route path="/cc-archive" element={<ProtectedRoute><CreditCardArchive /></ProtectedRoute>} />
+          <Route path="/residents" element={<ProtectedRoute><Residents /></ProtectedRoute>} />
+          <Route path="/super-admin" element={<ProtectedRoute requireSuperAdmin><SuperAdminDashboard /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </main>
@@ -191,7 +253,9 @@ function App() {
   return (
     <Router>
       <AuthProvider>
-        <AppContent />
+        <CommunityProvider>
+          <AppContent />
+        </CommunityProvider>
       </AuthProvider>
     </Router>
   )

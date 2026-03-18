@@ -10,6 +10,8 @@ from app.models.cc_file_archive import CcFileArchive
 from app.models.cc_resident import CcResident
 from app.models.cc_monthly_entry import CcMonthlyEntry
 from app.models.cc_custom_field import CcCustomField
+from app.models.resident import Resident
+from app.models.community import Community
 
 __all__ = [
     "Customer",
@@ -24,6 +26,8 @@ __all__ = [
     "CcResident",
     "CcMonthlyEntry",
     "CcCustomField",
+    "Resident",
+    "Community",
 ]
 
 

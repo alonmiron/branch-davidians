@@ -39,7 +39,7 @@ export const AuthProvider = ({ children }) => {
       // Set default authorization header
       api.defaults.headers.common['Authorization'] = `Bearer ${access_token}`;
       
-      return { success: true };
+      return { success: true, user: userData };
     } catch (error) {
       console.error('Login error:', error);
       return {
@@ -81,6 +81,19 @@ export const AuthProvider = ({ children }) => {
     return user?.role === 'admin';
   };
 
+  const isSuperAdmin = () => {
+    return user?.role === 'super_admin';
+  };
+
+  // Residents module permissions
+  const RESIDENTS_READ_ROLES = ['admin', 'manager', 'data_entry', 'public', 'payment_clerk', 'mehamemet'];
+  const RESIDENTS_WRITE_ROLES = ['admin', 'manager', 'data_entry', 'payment_clerk', 'mehamemet'];
+  const RESIDENTS_DELETE_ROLES = ['admin'];
+
+  const canReadResidents = () => RESIDENTS_READ_ROLES.includes(user?.role);
+  const canWriteResidents = () => RESIDENTS_WRITE_ROLES.includes(user?.role);
+  const canDeleteResidents = () => RESIDENTS_DELETE_ROLES.includes(user?.role);
+
   const value = {
     user,
     token,
@@ -89,7 +102,11 @@ export const AuthProvider = ({ children }) => {
     refreshUser,
     logout,
     isAuthenticated,
-    isAdmin
+    isAdmin,
+    isSuperAdmin,
+    canReadResidents,
+    canWriteResidents,
+    canDeleteResidents,
   };
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

@@ -21,7 +21,12 @@ export default function Login() {
     setLoading(false);
 
     if (result.success) {
-      navigate('/');
+      // Super admins go straight to the community dashboard to create/manage communities
+      if (result.user?.role === 'super_admin') {
+        navigate('/super-admin');
+      } else {
+        navigate('/');
+      }
     } else {
       setError(result.error);
     }
@@ -68,6 +73,9 @@ export default function Login() {
                 </h2>
                 <p className="mt-2 text-blue-100">
                   Sign in to manage Hogla Community payments
+                </p>
+                <p className="mt-1 text-blue-200 text-sm">
+                  Platform admins: sign in with your super admin account to create and manage communities.
                 </p>
               </div>
             </div>

@@ -13,12 +13,14 @@ class UserBase(BaseModel):
     @field_validator('role')
     @classmethod
     def validate_role(cls, v):
-        if v not in ['admin', 'payment_clerk', 'mehamemet']:
-            raise ValueError('role must be admin, payment_clerk, or mehamemet')
+        allowed = ['admin', 'payment_clerk', 'mehamemet', 'manager', 'data_entry', 'public', 'super_admin']
+        if v not in allowed:
+            raise ValueError(f'role must be one of: {", ".join(allowed)}')
         return v
 
 class UserCreate(UserBase):
     password: str
+    community_id: Optional[int] = None
 
 class UserUpdate(BaseModel):
     full_name: Optional[str] = None
@@ -29,12 +31,14 @@ class UserUpdate(BaseModel):
     requires_password_reset: Optional[bool] = None
     phone_country: Optional[str] = None
     phone_number: Optional[str] = None
+    community_id: Optional[int] = None
 
     @field_validator('role')
     @classmethod
     def validate_role(cls, v):
-        if v is not None and v not in ['admin', 'payment_clerk', 'mehamemet']:
-            raise ValueError('role must be admin, payment_clerk, or mehamemet')
+        allowed = ['admin', 'payment_clerk', 'mehamemet', 'manager', 'data_entry', 'public', 'super_admin']
+        if v is not None and v not in allowed:
+            raise ValueError(f'role must be one of: {", ".join(allowed)}')
         return v
 
 def _coerce_bool(v):
@@ -43,6 +47,7 @@ def _coerce_bool(v):
 
 class UserResponse(UserBase):
     id: int
+    community_id: Optional[int] = None
     is_active: Optional[bool] = True
     email_verified: Optional[bool] = False
     requires_email_update: Optional[bool] = False
