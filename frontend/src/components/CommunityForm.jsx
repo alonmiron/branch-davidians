@@ -1,7 +1,16 @@
 import { useState, useEffect } from 'react';
 import { createCommunity, updateCommunity } from '../services/api';
 
-const EMPTY_FORM = { name: '', website_url: '', phone_number: '', active: true };
+const EMPTY_FORM = {
+  name: '',
+  website_url: '',
+  phone_number: '',
+  active: true,
+  section_people: true,
+  section_places: true,
+  section_community: true,
+  section_payments: true,
+};
 
 export default function CommunityForm({ community, onClose, onSaved }) {
   const [form, setForm] = useState(EMPTY_FORM);
@@ -12,10 +21,14 @@ export default function CommunityForm({ community, onClose, onSaved }) {
   useEffect(() => {
     if (community) {
       setForm({
-        name:         community.name || '',
-        website_url:  community.website_url || '',
-        phone_number: community.phone_number || '',
-        active:       community.active !== false,
+        name:              community.name || '',
+        website_url:       community.website_url || '',
+        phone_number:      community.phone_number || '',
+        active:            community.active !== false,
+        section_people:    community.section_people !== false,
+        section_places:    community.section_places !== false,
+        section_community: community.section_community !== false,
+        section_payments:  community.section_payments !== false,
       });
     } else {
       setForm(EMPTY_FORM);
@@ -35,10 +48,14 @@ export default function CommunityForm({ community, onClose, onSaved }) {
     setSaving(true);
     try {
       const payload = {
-        name:         form.name.trim(),
-        website_url:  form.website_url.trim() || null,
-        phone_number: form.phone_number.trim() || null,
-        active:       form.active,
+        name:              form.name.trim(),
+        website_url:       form.website_url.trim() || null,
+        phone_number:      form.phone_number.trim() || null,
+        active:            form.active,
+        section_people:    form.section_people,
+        section_places:    form.section_places,
+        section_community: form.section_community,
+        section_payments:  form.section_payments,
       };
       if (isEdit) {
         await updateCommunity(community.id, payload);
@@ -106,6 +123,33 @@ export default function CommunityForm({ community, onClose, onSaved }) {
               placeholder="+972-50-000-0000"
               className="w-full border border-gray-300 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
             />
+          </div>
+
+          <div>
+            <label className="block text-xs font-medium text-gray-600 mb-2">Enabled Sections</label>
+            <p className="text-xs text-gray-400 mb-3">Choose which sections appear in this community&apos;s navigation header.</p>
+            <div className="space-y-2">
+              {[
+                { key: 'section_people',    label: 'People',    desc: 'Residents directory' },
+                { key: 'section_places',    label: 'Places',    desc: 'Interactive community map' },
+                { key: 'section_community', label: 'Community', desc: 'Groups, leaders & services' },
+                { key: 'section_payments',  label: 'Payments',  desc: 'All payment tools' },
+              ].map(({ key, label, desc }) => (
+                <label key={key} className="flex items-center gap-3 p-2.5 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    name={key}
+                    checked={form[key]}
+                    onChange={handleChange}
+                    className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+                  />
+                  <div>
+                    <span className="text-sm font-medium text-gray-800">{label}</span>
+                    <span className="text-xs text-gray-400 ml-2">— {desc}</span>
+                  </div>
+                </label>
+              ))}
+            </div>
           </div>
 
           <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">

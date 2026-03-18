@@ -13,7 +13,8 @@ class UserBase(BaseModel):
     @field_validator('role')
     @classmethod
     def validate_role(cls, v):
-        allowed = ['admin', 'payment_clerk', 'mehamemet', 'manager', 'data_entry', 'public', 'super_admin']
+        allowed = ['admin', 'payment_clerk', 'mehamemet', 'manager', 'data_entry', 'public',
+                   'super_admin', 'community_data_administrator']
         if v not in allowed:
             raise ValueError(f'role must be one of: {", ".join(allowed)}')
         return v
@@ -36,7 +37,8 @@ class UserUpdate(BaseModel):
     @field_validator('role')
     @classmethod
     def validate_role(cls, v):
-        allowed = ['admin', 'payment_clerk', 'mehamemet', 'manager', 'data_entry', 'public', 'super_admin']
+        allowed = ['admin', 'payment_clerk', 'mehamemet', 'manager', 'data_entry', 'public',
+                   'super_admin', 'community_data_administrator']
         if v is not None and v not in allowed:
             raise ValueError(f'role must be one of: {", ".join(allowed)}')
         return v

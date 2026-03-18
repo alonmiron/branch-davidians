@@ -61,7 +61,7 @@ function upcomingBirthday(dateStr) {
 }
 
 export default function ResidentDetailModal({ resident, onClose, onEdit, onDelete }) {
-  const { canWriteResidents, canDeleteResidents } = useAuth();
+  const { canWriteResidents, canDeleteResidents, isCommunityDataAdmin } = useAuth();
 
   if (!resident) return null;
 
@@ -156,13 +156,15 @@ export default function ResidentDetailModal({ resident, onClose, onEdit, onDelet
           {/* Status */}
           <section>
             <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Status</h3>
-            {/* Taxpayer highlight */}
-            <div className={`mb-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold ${resident.taxpayer ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-400'}`}>
-              <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
-              </svg>
-              {resident.taxpayer ? 'Taxpayer' : 'Not a taxpayer'}
-            </div>
+            {/* Taxpayer highlight — hidden for community_data_administrator */}
+            {!isCommunityDataAdmin() && (
+              <div className={`mb-2 inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-semibold ${resident.taxpayer ? 'bg-blue-100 text-blue-800' : 'bg-gray-100 text-gray-400'}`}>
+                <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 14l6-6m-5.5.5h.01m4.99 5h.01M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16l3.5-2 3.5 2 3.5-2 3.5 2z" />
+                </svg>
+                {resident.taxpayer ? 'Taxpayer' : 'Not a taxpayer'}
+              </div>
+            )}
             {/* Landlord link when tenant */}
             {resident.tenant && (resident.landlord_id || resident.landlord_resident) && (
               <div className="mb-2 flex items-center gap-2 px-3 py-1.5 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-800">

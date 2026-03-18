@@ -16,11 +16,14 @@ import AdminUsers from './pages/AdminUsers'
 import CreditCardPayments from './pages/CreditCardPayments'
 import CreditCardArchive from './pages/CreditCardArchive'
 import Residents from './pages/Residents'
+import Places from './pages/Places'
+import CommunityPage from './pages/CommunityPage'
+import PaymentsHub from './pages/PaymentsHub'
 import SuperAdminDashboard from './pages/SuperAdminDashboard'
 
 function AppContent() {
-  const { isAuthenticated, isAdmin, isSuperAdmin, canReadResidents, user, logout } = useAuth();
-  const { activeCommunity, clearActiveCommunity } = useCommunity();
+  const { isAuthenticated, isAdmin, isSuperAdmin, isCommunityDataAdmin, canReadResidents, canAccessPayments, user, logout } = useAuth();
+  const { activeCommunity, clearActiveCommunity, communitySettings } = useCommunity();
   const navigate = useNavigate();
 
   if (!isAuthenticated()) {
@@ -91,7 +94,8 @@ function AppContent() {
             </div>
 
             {/* Center - Navigation Links */}
-            <div className="hidden lg:flex lg:space-x-2 xl:space-x-4 flex-1 justify-center max-w-3xl">
+            <div className="hidden lg:flex lg:space-x-1 xl:space-x-2 flex-1 justify-center max-w-3xl">
+              {/* Dashboard — always visible */}
               <Link
                 to="/"
                 className="border-b-2 border-transparent text-gray-600 hover:border-blue-500 hover:text-blue-600 inline-flex items-center px-2 xl:px-3 pt-1 text-sm font-medium transition duration-150"
@@ -101,6 +105,61 @@ function AppContent() {
                 </svg>
                 Dashboard
               </Link>
+
+              {/* People section — only shown when People is enabled AND Community section is not (avoids duplication).
+                  When Community is also enabled, Residents is reached via the Community hub. */}
+              {communitySettings?.section_people && !communitySettings?.section_community && canReadResidents() && (
+                <Link
+                  to="/residents"
+                  className="border-b-2 border-transparent text-gray-600 hover:border-blue-500 hover:text-blue-600 inline-flex items-center px-2 xl:px-3 pt-1 text-sm font-medium transition duration-150"
+                >
+                  <svg className="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                  </svg>
+                  People
+                </Link>
+              )}
+
+              {/* Places section */}
+              {communitySettings?.section_places && (
+                <Link
+                  to="/places"
+                  className="border-b-2 border-transparent text-gray-600 hover:border-blue-500 hover:text-blue-600 inline-flex items-center px-2 xl:px-3 pt-1 text-sm font-medium transition duration-150"
+                >
+                  <svg className="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+                  </svg>
+                  Places
+                </Link>
+              )}
+
+              {/* Community section */}
+              {communitySettings?.section_community && (
+                <Link
+                  to="/community"
+                  className="border-b-2 border-transparent text-gray-600 hover:border-blue-500 hover:text-blue-600 inline-flex items-center px-2 xl:px-3 pt-1 text-sm font-medium transition duration-150"
+                >
+                  <svg className="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                  </svg>
+                  Community
+                </Link>
+              )}
+
+              {/* Payments section — hidden for community_data_administrator */}
+              {communitySettings?.section_payments && canAccessPayments() && (
+                <Link
+                  to="/payments"
+                  className="border-b-2 border-transparent text-gray-600 hover:border-blue-500 hover:text-blue-600 inline-flex items-center px-2 xl:px-3 pt-1 text-sm font-medium transition duration-150"
+                >
+                  <svg className="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                  </svg>
+                  Payments
+                </Link>
+              )}
+
+              {/* Admin Users — role-based */}
               {isAdmin() && (
                 <Link
                   to="/admin/users"
@@ -112,7 +171,9 @@ function AppContent() {
                   Admin Users
                 </Link>
               )}
-              {isSuperAdmin() && (
+
+              {/* Super Admin — only for super_admin role */}
+              {isSuperAdmin() && !isCommunityDataAdmin() && (
                 <Link
                   to="/super-admin"
                   onClick={() => clearActiveCommunity()}
@@ -124,72 +185,6 @@ function AppContent() {
                   Super Admin
                 </Link>
               )}
-              <Link
-                to="/customers"
-                className="border-b-2 border-transparent text-gray-600 hover:border-blue-500 hover:text-blue-600 inline-flex items-center px-2 xl:px-3 pt-1 text-sm font-medium transition duration-150"
-              >
-                <svg className="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                Customers
-              </Link>
-              {canReadResidents() && (
-                <Link
-                  to="/residents"
-                  className="border-b-2 border-transparent text-gray-600 hover:border-blue-500 hover:text-blue-600 inline-flex items-center px-2 xl:px-3 pt-1 text-sm font-medium transition duration-150"
-                >
-                  <svg className="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9.75L12 4l9 5.75V20a1 1 0 01-1 1H4a1 1 0 01-1-1V9.75z" />
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 21V12h6v9" />
-                  </svg>
-                  Residents
-                </Link>
-              )}
-              <Link
-                to="/manual-payments"
-                className="border-b-2 border-transparent text-gray-600 hover:border-blue-500 hover:text-blue-600 inline-flex items-center px-2 xl:px-3 pt-1 text-sm font-medium transition duration-150"
-              >
-                <svg className="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
-                Payments
-              </Link>
-              <Link
-                to="/cc-payments"
-                className="border-b-2 border-transparent text-gray-600 hover:border-blue-500 hover:text-blue-600 inline-flex items-center px-2 xl:px-3 pt-1 text-sm font-medium transition duration-150"
-              >
-                <svg className="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
-                </svg>
-                CC Payments
-              </Link>
-              <Link
-                to="/cc-archive"
-                className="border-b-2 border-transparent text-gray-600 hover:border-blue-500 hover:text-blue-600 inline-flex items-center px-2 xl:px-3 pt-1 text-sm font-medium transition duration-150"
-              >
-                <svg className="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                </svg>
-                Archive
-              </Link>
-              <Link
-                to="/batch"
-                className="border-b-2 border-transparent text-gray-600 hover:border-blue-500 hover:text-blue-600 inline-flex items-center px-2 xl:px-3 pt-1 text-sm font-medium transition duration-150"
-              >
-                <svg className="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                </svg>
-                Batch
-              </Link>
-              <Link
-                to="/failed"
-                className="border-b-2 border-transparent text-gray-600 hover:border-blue-500 hover:text-blue-600 inline-flex items-center px-2 xl:px-3 pt-1 text-sm font-medium transition duration-150"
-              >
-                <svg className="h-4 w-4 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                </svg>
-                Failed
-              </Link>
             </div>
 
             {/* Right side - User info and logout */}
@@ -232,15 +227,23 @@ function AppContent() {
       <main className="max-w-7xl mx-auto py-6 sm:px-6 lg:px-8">
         <Routes>
           <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-          <Route path="/customers" element={<ProtectedRoute><Customers /></ProtectedRoute>} />
-          <Route path="/manual-payments" element={<ProtectedRoute><ManualPayments /></ProtectedRoute>} />
-          <Route path="/batch" element={<ProtectedRoute><BatchOperations /></ProtectedRoute>} />
-          <Route path="/failed" element={<ProtectedRoute><FailedCharges /></ProtectedRoute>} />
+          {/* Section: People */}
+          <Route path="/residents" element={<ProtectedRoute><Residents /></ProtectedRoute>} />
+          {/* Section: Places */}
+          <Route path="/places" element={<ProtectedRoute><Places /></ProtectedRoute>} />
+          {/* Section: Community */}
+          <Route path="/community" element={<ProtectedRoute><CommunityPage /></ProtectedRoute>} />
+          {/* Section: Payments — blocked for community_data_administrator */}
+          <Route path="/payments" element={<ProtectedRoute requirePayments><PaymentsHub /></ProtectedRoute>} />
+          <Route path="/customers" element={<ProtectedRoute requirePayments><Customers /></ProtectedRoute>} />
+          <Route path="/manual-payments" element={<ProtectedRoute requirePayments><ManualPayments /></ProtectedRoute>} />
+          <Route path="/batch" element={<ProtectedRoute requirePayments><BatchOperations /></ProtectedRoute>} />
+          <Route path="/failed" element={<ProtectedRoute requirePayments><FailedCharges /></ProtectedRoute>} />
+          <Route path="/cc-payments" element={<ProtectedRoute requirePayments><CreditCardPayments /></ProtectedRoute>} />
+          <Route path="/cc-archive" element={<ProtectedRoute requirePayments><CreditCardArchive /></ProtectedRoute>} />
+          {/* Admin & account */}
           <Route path="/account" element={<ProtectedRoute><AccountSettings /></ProtectedRoute>} />
           <Route path="/admin/users" element={<ProtectedRoute requireAdmin><AdminUsers /></ProtectedRoute>} />
-          <Route path="/cc-payments" element={<ProtectedRoute><CreditCardPayments /></ProtectedRoute>} />
-          <Route path="/cc-archive" element={<ProtectedRoute><CreditCardArchive /></ProtectedRoute>} />
-          <Route path="/residents" element={<ProtectedRoute><Residents /></ProtectedRoute>} />
           <Route path="/super-admin" element={<ProtectedRoute requireSuperAdmin><SuperAdminDashboard /></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

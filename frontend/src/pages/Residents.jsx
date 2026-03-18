@@ -20,7 +20,7 @@ function SortIcon({ direction }) {
 }
 
 export default function Residents() {
-  const { canWriteResidents, canDeleteResidents } = useAuth();
+  const { canWriteResidents, canDeleteResidents, isCommunityDataAdmin } = useAuth();
 
   const [residents, setResidents] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -248,7 +248,7 @@ export default function Residents() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap gap-1">
-                        {r.taxpayer && <StatusTag label="Taxpayer" color="blue" />}
+                        {r.taxpayer && !isCommunityDataAdmin() && <StatusTag label="Taxpayer" color="blue" />}
                         {r.landlord && <StatusTag label="Landlord" color="purple" />}
                         {r.tenant && <StatusTag label="Tenant" color="indigo" />}
                         {r.senior_citizen && <StatusTag label="Senior" color="amber" />}

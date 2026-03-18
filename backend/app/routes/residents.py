@@ -5,17 +5,30 @@ All queries are scoped by community_id resolved via get_community_id().
 from fastapi import APIRouter, Depends, HTTPException, Query, Header
 from sqlalchemy.orm import Session
 from typing import List, Optional
+from pydantic import BaseModel
 
 from app.database import get_db
 from app.models.resident import Resident
 from app.models.user import User
 from app.schemas.resident_schemas import ResidentCreate, ResidentUpdate, ResidentResponse
+from app.schemas.user import UserResponse
 from app.services.auth_service import (
     require_residents_read,
     require_residents_write,
     require_residents_delete,
+    require_role,
     get_community_id,
+    get_password_hash,
 )
+
+ALLOWED_RESIDENT_USER_ROLES = [
+    "payment_clerk", "mehamemet", "manager", "data_entry", "public",
+    "community_data_administrator",
+]
+
+class CreateUserForResidentRequest(BaseModel):
+    role: str
+    password: str
 
 router = APIRouter()
 
@@ -171,3 +184,70 @@ def delete_resident(
     db.delete(r)
     db.commit()
     return {"message": "Resident deleted"}
+
+
+# ─── Create platform user for a resident ──────────────────────────────────────
+
+_require_admin_or_super = require_role(["admin", "super_admin"])
+
+
+@router.post("/{resident_id}/create-user", response_model=UserResponse, status_code=201)
+def create_user_for_resident(
+    resident_id: int,
+    data: CreateUserForResidentRequest,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(_require_admin_or_super),
+):
+    """
+    Create a platform login account for an existing resident.
+    Only admin and super_admin may call this.
+    The resident must have email and telephone filled in.
+    """
+    r = db.query(Resident).filter(Resident.id == resident_id).first()
+    if not r:
+        raise HTTPException(status_code=404, detail="Resident not found")
+
+    if not r.email or not r.email.strip():
+        raise HTTPException(status_code=422, detail="Resident must have an email address before creating a user account.")
+    if not r.telephone or not r.telephone.strip():
+        raise HTTPException(status_code=422, detail="Resident must have a phone number before creating a user account.")
+
+    if data.role not in ALLOWED_RESIDENT_USER_ROLES:
+        raise HTTPException(
+            status_code=422,
+            detail=f"Role must be one of: {', '.join(ALLOWED_RESIDENT_USER_ROLES)}"
+        )
+    if not data.password or len(data.password.strip()) < 6:
+        raise HTTPException(status_code=422, detail="Temporary password must be at least 6 characters.")
+
+    # Username derived from email (part before @), made unique if needed
+    base_username = r.email.strip().split("@")[0].lower().replace(" ", "_")
+    username = base_username
+    suffix = 1
+    while db.query(User).filter(User.username == username).first():
+        username = f"{base_username}{suffix}"
+        suffix += 1
+
+    # Email must also be unique
+    if db.query(User).filter(User.email == r.email.strip()).first():
+        raise HTTPException(
+            status_code=409,
+            detail=f"A user account with email '{r.email}' already exists."
+        )
+
+    new_user = User(
+        username=username,
+        email=r.email.strip(),
+        hashed_password=get_password_hash(data.password),
+        full_name=r.full_name,
+        role=data.role,
+        community_id=r.community_id,
+        is_active=True,
+        email_verified=True,
+        requires_email_update=False,
+        requires_password_reset=True,  # Force password change on first login
+    )
+    db.add(new_user)
+    db.commit()
+    db.refresh(new_user)
+    return new_user

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { createResident, updateResident, getResidents } from '../services/api';
+import { createResident, updateResident, getResidents, createUserForResident } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 
 // ─── Searchable street selector ───────────────────────────────────────────────
 function StreetSelect({ label, value, onChange, streets, placeholder = '— select street —' }) {
@@ -294,12 +295,28 @@ const EMPTY_FORM = {
   konenut: '',
 };
 
+const RESIDENT_USER_ROLES = [
+  { value: 'community_data_administrator', label: 'Community Data Administrator' },
+  { value: 'payment_clerk',                label: 'Payment Clerk' },
+  { value: 'mehamemet',                    label: 'Mehamemet' },
+  { value: 'manager',                      label: 'Manager' },
+  { value: 'data_entry',                   label: 'Data Entry' },
+  { value: 'public',                       label: 'Public' },
+];
+
 export default function ResidentForm({ resident, onClose, onSaved }) {
+  const { isCommunityDataAdmin, isAdmin, isSuperAdmin } = useAuth();
   const [form, setForm] = useState(EMPTY_FORM);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [allResidents, setAllResidents] = useState([]);
   const isEdit = !!resident;
+
+  // "Create User" sub-form state (edit mode, admin/super_admin only)
+  const canCreateUser = isEdit && (isAdmin() || isSuperAdmin());
+  const [createUser, setCreateUser] = useState(false);
+  const [userForm, setUserForm] = useState({ role: 'community_data_administrator', password: '', showPassword: false });
+  const [userSuccess, setUserSuccess] = useState('');
 
   useEffect(() => {
     getResidents()
@@ -357,14 +374,29 @@ export default function ResidentForm({ resident, onClose, onSaved }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
+    setUserSuccess('');
     if (!form.first_name.trim() || !form.family_name.trim()) {
       setError('First name and family name are required.');
       return;
     }
-    // Validate: if marked as child, at least one parent must be chosen
     if (form.is_child_of && !form.child_of_parent_id && !form.child_of_parent2_id) {
       setError('Please select at least one parent from the list.');
       return;
+    }
+    // When creating a user, email and phone become required
+    if (createUser) {
+      if (!form.email.trim()) {
+        setError('Email is required to create a user account.');
+        return;
+      }
+      if (!form.telephone.trim()) {
+        setError('Phone number is required to create a user account.');
+        return;
+      }
+      if (!userForm.password || userForm.password.length < 6) {
+        setError('Temporary password must be at least 6 characters.');
+        return;
+      }
     }
 
     setSaving(true);
@@ -397,6 +429,36 @@ export default function ResidentForm({ resident, onClose, onSaved }) {
       } else {
         await createResident(payload);
       }
+
+      // Optionally create a platform user account for this resident
+      if (createUser && isEdit) {
+        try {
+          const userRes = await createUserForResident(resident.id, {
+            role: userForm.role,
+            password: userForm.password,
+          });
+          setUserSuccess(`User account created! Username: ${userRes.data.username}. The user will be prompted to change their password on first login.`);
+          setSaving(false);
+          // Don't close — show the success message so the admin can note the username
+          return;
+        } catch (userErr) {
+          const uData = userErr?.response?.data;
+          const uStatus = userErr?.response?.status;
+          let uMsg;
+          if (uStatus === 409) {
+            uMsg = (typeof uData?.detail === 'string' ? uData.detail : null) || 'A user with this email already exists.';
+          } else if (typeof uData?.detail === 'string') {
+            uMsg = uData.detail;
+          } else {
+            uMsg = `User creation failed (HTTP ${uStatus || '?'}). Resident was saved.`;
+          }
+          // Resident was already saved — show error but don't close
+          setError(`Resident saved, but user creation failed: ${uMsg}`);
+          setSaving(false);
+          return;
+        }
+      }
+
       onSaved();
     } catch (err) {
       console.error('[ResidentForm] save error:', err, 'response:', err?.response);
@@ -500,25 +562,46 @@ export default function ResidentForm({ resident, onClose, onSaved }) {
           <section>
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Contact</h3>
             <div className="grid grid-cols-2 gap-4">
-              <Field label="Telephone" name="telephone" value={form.telephone} onChange={handleChange} type="tel" />
-              <Field label="Email" name="email" value={form.email} onChange={handleChange} type="email" />
+              <Field
+                label={createUser ? 'Telephone *' : 'Telephone'}
+                name="telephone"
+                value={form.telephone}
+                onChange={handleChange}
+                type="tel"
+                required={createUser}
+              />
+              <Field
+                label={createUser ? 'Email *' : 'Email'}
+                name="email"
+                value={form.email}
+                onChange={handleChange}
+                type="email"
+                required={createUser}
+              />
             </div>
+            {createUser && (!form.telephone.trim() || !form.email.trim()) && (
+              <p className="mt-2 text-xs text-amber-600 bg-amber-50 rounded px-2 py-1">
+                Email and phone are required to create a user account.
+              </p>
+            )}
           </section>
 
           {/* Status flags */}
           <section>
             <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Status</h3>
-            {/* Taxpayer — primary community flag */}
-            <label className="flex items-center gap-2.5 mb-3 px-3 py-2.5 rounded-lg border-2 border-blue-200 bg-blue-50 cursor-pointer select-none w-fit">
-              <input
-                type="checkbox"
-                name="taxpayer"
-                checked={form.taxpayer}
-                onChange={handleChange}
-                className="h-4 w-4 rounded border-blue-400 text-blue-600 focus:ring-blue-500"
-              />
-              <span className="text-sm font-semibold text-blue-800">Taxpayer</span>
-            </label>
+            {/* Taxpayer — hidden for community_data_administrator */}
+            {!isCommunityDataAdmin() && (
+              <label className="flex items-center gap-2.5 mb-3 px-3 py-2.5 rounded-lg border-2 border-blue-200 bg-blue-50 cursor-pointer select-none w-fit">
+                <input
+                  type="checkbox"
+                  name="taxpayer"
+                  checked={form.taxpayer}
+                  onChange={handleChange}
+                  className="h-4 w-4 rounded border-blue-400 text-blue-600 focus:ring-blue-500"
+                />
+                <span className="text-sm font-semibold text-blue-800">Taxpayer</span>
+              </label>
+            )}
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               <CheckField label="Landlord" name="landlord" checked={form.landlord} onChange={handleChange} />
               <CheckField label="Tenant" name="tenant" checked={form.tenant} onChange={handleChange} />
@@ -590,14 +673,92 @@ export default function ResidentForm({ resident, onClose, onSaved }) {
             </div>
           </section>
 
+          {/* Create User Account (admin / super_admin, edit mode only) */}
+          {canCreateUser && (
+            <section className="border border-indigo-200 rounded-xl bg-indigo-50 px-4 py-4">
+              <label className="flex items-center gap-3 cursor-pointer select-none mb-1">
+                <input
+                  type="checkbox"
+                  checked={createUser}
+                  onChange={(e) => { setCreateUser(e.target.checked); setUserSuccess(''); setError(''); }}
+                  className="h-4 w-4 rounded border-indigo-400 text-indigo-600 focus:ring-indigo-500"
+                />
+                <span className="text-sm font-semibold text-indigo-800">Create platform user account for this resident</span>
+              </label>
+              <p className="text-xs text-indigo-500 mb-3 ml-7">
+                A login account will be created using the resident&apos;s email. They will be prompted to change their password on first login.
+              </p>
+
+              {createUser && (
+                <div className="space-y-3 mt-2">
+                  <div>
+                    <label className="block text-xs font-medium text-indigo-700 mb-1">User Type / Role *</label>
+                    <select
+                      value={userForm.role}
+                      onChange={(e) => setUserForm((f) => ({ ...f, role: e.target.value }))}
+                      className="w-full border border-indigo-300 rounded-md px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                    >
+                      {RESIDENT_USER_ROLES.map(({ value, label }) => (
+                        <option key={value} value={value}>{label}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-medium text-indigo-700 mb-1">Temporary Password * <span className="font-normal text-indigo-400">(min. 6 characters)</span></label>
+                    <div className="relative">
+                      <input
+                        type={userForm.showPassword ? 'text' : 'password'}
+                        value={userForm.password}
+                        onChange={(e) => setUserForm((f) => ({ ...f, password: e.target.value }))}
+                        placeholder="Set a temporary password…"
+                        className="w-full border border-indigo-300 rounded-md px-3 py-2 pr-10 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setUserForm((f) => ({ ...f, showPassword: !f.showPassword }))}
+                        className="absolute inset-y-0 right-2 flex items-center text-indigo-400 hover:text-indigo-600"
+                        tabIndex={-1}
+                      >
+                        {userForm.showPassword ? (
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 4.411m0 0L21 21" />
+                          </svg>
+                        ) : (
+                          <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                          </svg>
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* User creation success message */}
+          {userSuccess && (
+            <div className="bg-green-50 border border-green-200 text-green-800 text-sm rounded-lg p-3">
+              <strong>Success!</strong> {userSuccess}
+              <div className="mt-2">
+                <button type="button" onClick={onSaved} className="text-green-700 underline text-xs">
+                  Close and refresh list
+                </button>
+              </div>
+            </div>
+          )}
+
           {/* Actions */}
           <div className="flex gap-3 pt-2 border-t border-gray-100">
             <button
               type="submit"
-              disabled={saving}
+              disabled={saving || !!userSuccess}
               className="flex-1 bg-blue-600 text-white py-2.5 rounded-lg font-medium hover:bg-blue-700 disabled:opacity-50 transition"
             >
-              {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Resident'}
+              {saving ? 'Saving…' : isEdit
+                ? (createUser ? 'Save & Create User Account' : 'Save Changes')
+                : 'Create Resident'}
             </button>
             <button
               type="button"

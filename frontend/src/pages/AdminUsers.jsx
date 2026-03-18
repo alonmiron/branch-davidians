@@ -291,6 +291,7 @@ export default function AdminUsers() {
                         <option value="payment_clerk">Payment clerk</option>
                         <option value="admin">Admin</option>
                         <option value="mehamemet">Mehamemet</option>
+                        <option value="community_data_administrator">Community Data Administrator</option>
                       </select>
                     </td>
                     <td className="py-3 pr-4">
@@ -442,6 +443,7 @@ export default function AdminUsers() {
               <option value="payment_clerk">Payment clerk</option>
               <option value="admin">Admin</option>
               <option value="mehamemet">Mehamemet</option>
+              <option value="community_data_administrator">Community Data Administrator</option>
             </select>
           </div>
           <div>

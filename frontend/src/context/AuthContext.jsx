@@ -85,9 +85,20 @@ export const AuthProvider = ({ children }) => {
     return user?.role === 'super_admin';
   };
 
+  const isCommunityDataAdmin = () => {
+    return user?.role === 'community_data_administrator';
+  };
+
+  // Payments are hidden entirely for community_data_administrator (and super_admin manages separately)
+  const canAccessPayments = () => {
+    return !isCommunityDataAdmin() && !isSuperAdmin();
+  };
+
   // Residents module permissions
-  const RESIDENTS_READ_ROLES = ['admin', 'manager', 'data_entry', 'public', 'payment_clerk', 'mehamemet'];
-  const RESIDENTS_WRITE_ROLES = ['admin', 'manager', 'data_entry', 'payment_clerk', 'mehamemet'];
+  const RESIDENTS_READ_ROLES = ['admin', 'manager', 'data_entry', 'public', 'payment_clerk',
+    'mehamemet', 'community_data_administrator'];
+  const RESIDENTS_WRITE_ROLES = ['admin', 'manager', 'data_entry', 'payment_clerk',
+    'mehamemet', 'community_data_administrator'];
   const RESIDENTS_DELETE_ROLES = ['admin'];
 
   const canReadResidents = () => RESIDENTS_READ_ROLES.includes(user?.role);
@@ -104,6 +115,8 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated,
     isAdmin,
     isSuperAdmin,
+    isCommunityDataAdmin,
+    canAccessPayments,
     canReadResidents,
     canWriteResidents,
     canDeleteResidents,

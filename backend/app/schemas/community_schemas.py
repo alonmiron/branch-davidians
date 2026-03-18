@@ -8,6 +8,10 @@ class CommunityBase(BaseModel):
     website_url: Optional[str] = None
     phone_number: Optional[str] = None
     active: bool = True
+    section_people: bool = True
+    section_places: bool = True
+    section_community: bool = True
+    section_payments: bool = True
 
 
 class CommunityCreate(CommunityBase):
@@ -19,6 +23,10 @@ class CommunityUpdate(BaseModel):
     website_url: Optional[str] = None
     phone_number: Optional[str] = None
     active: Optional[bool] = None
+    section_people: Optional[bool] = None
+    section_places: Optional[bool] = None
+    section_community: Optional[bool] = None
+    section_payments: Optional[bool] = None
 
 
 class CommunityResponse(CommunityBase):

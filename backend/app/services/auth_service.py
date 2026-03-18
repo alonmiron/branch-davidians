@@ -112,10 +112,16 @@ def get_community_id(
 
 # ─── Residents permission helpers ────────────────────────────────────────────
 
-# Roles that can read resident data (all authenticated roles)
-RESIDENTS_READ_ROLES = ["admin", "manager", "data_entry", "public", "payment_clerk", "mehamemet"]
+# Roles that can read resident data
+RESIDENTS_READ_ROLES = [
+    "admin", "manager", "data_entry", "public", "payment_clerk", "mehamemet",
+    "community_data_administrator",
+]
 # Roles that can create/edit residents
-RESIDENTS_WRITE_ROLES = ["admin", "manager", "data_entry", "payment_clerk", "mehamemet"]
+RESIDENTS_WRITE_ROLES = [
+    "admin", "manager", "data_entry", "payment_clerk", "mehamemet",
+    "community_data_administrator",
+]
 # Roles that can delete residents
 RESIDENTS_DELETE_ROLES = ["admin"]
 

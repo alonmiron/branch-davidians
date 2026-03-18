@@ -165,6 +165,7 @@ export const uploadCcResults = (file, year, month) => {
 
 export const getCommunities = () => api.get('/communities');
 export const getCommunity = (id) => api.get(`/communities/${id}`);
+export const getCurrentCommunity = () => api.get('/communities/current');
 export const createCommunity = (data) => api.post('/communities', data);
 export const updateCommunity = (id, data) => api.put(`/communities/${id}`, data);
 export const deleteCommunity = (id) => api.delete(`/communities/${id}`);
@@ -176,6 +177,7 @@ export const getResident = (id) => api.get(`/residents/${id}`);
 export const createResident = (data) => api.post('/residents', data);
 export const updateResident = (id, data) => api.put(`/residents/${id}`, data);
 export const deleteResident = (id) => api.delete(`/residents/${id}`);
+export const createUserForResident = (id, data) => api.post(`/residents/${id}/create-user`, data);
 
 // Archives
 export const getCcArchives = (params) => api.get('/cc/archives', { params });

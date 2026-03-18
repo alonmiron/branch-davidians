@@ -1,8 +1,13 @@
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
-export default function ProtectedRoute({ children, requireAdmin = false, requireSuperAdmin = false }) {
-  const { isAuthenticated, isAdmin, isSuperAdmin, loading, user } = useAuth();
+export default function ProtectedRoute({
+  children,
+  requireAdmin = false,
+  requireSuperAdmin = false,
+  requirePayments = false,
+}) {
+  const { isAuthenticated, isAdmin, isSuperAdmin, canAccessPayments, loading, user } = useAuth();
   const location = useLocation();
 
   if (loading) {
@@ -33,6 +38,18 @@ export default function ProtectedRoute({ children, requireAdmin = false, require
     );
   }
 
+  if (requirePayments && !canAccessPayments()) {
+    return (
+      <div className="flex items-center justify-center min-h-screen px-4">
+        <div className="text-center">
+          <div className="text-red-500 text-5xl mb-4">🚫</div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-2">Access Denied</h2>
+          <p className="text-gray-500 text-sm">Your account does not have access to payment screens.</p>
+        </div>
+      </div>
+    );
+  }
+
   if (user?.requires_email_update && location.pathname !== '/account') {
     return <Navigate to="/account" replace />;
   }
@@ -43,5 +60,3 @@ export default function ProtectedRoute({ children, requireAdmin = false, require
 
   return children;
 }
-
-
